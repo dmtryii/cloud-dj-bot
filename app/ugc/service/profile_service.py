@@ -1,30 +1,22 @@
 from .media_service import create_or_get_media
-from ..models import Profile, Contacts, CurrentAction
-from django.db import transaction
+from ..models import Profile, CurrentAction, Media
 
 
-def create_or_get_profile(chat):
-    with transaction.atomic():
-        profile, created = Profile.objects.get_or_create(
-            external_id=chat.id,
-            defaults={
-                'username': chat.username,
-            },
-        )
-
-        if created:
-            Contacts.objects.create(
-                profile=profile,
-                first_name=chat.first_name,
-                last_name=chat.last_name,
-            )
-
+def create_or_get_profile(profile: Profile) -> Profile:
+    profile, created = Profile.objects.get_or_create(
+        external_id=profile.external_id,
+        defaults={
+            'username': profile.username,
+            'first_name': profile.first_name,
+            'last_name': profile.last_name,
+        },
+    )
     return profile
 
 
-def create_or_update_current_action(chat, url):
-    media = create_or_get_media(url, chat)
-    profile = create_or_get_profile(chat)
+def create_or_update_current_action(profile: Profile, url: str) -> Media:
+    media = create_or_get_media(profile, url)
+    profile = create_or_get_profile(profile)
     current_action = CurrentAction.objects.filter(profile=profile).first()
 
     if current_action:
@@ -36,9 +28,9 @@ def create_or_update_current_action(chat, url):
             media=media,
         )
 
-    return profile, media
+    return media
 
 
-def get_current_action(chat):
-    profile = create_or_get_profile(chat)
+def get_current_action(profile: Profile) -> CurrentAction:
+    profile = create_or_get_profile(profile)
     return CurrentAction.objects.filter(profile=profile).first()

@@ -1,16 +1,11 @@
 from django.contrib import admin
 
-from .models import Profile, Contacts, Media, MediaProfile, Hashtag, CurrentAction
+from .models import Profile, Media, MediaProfile, Hashtag, CurrentAction
 
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('username', 'first_login_date', 'is_active', 'state')
-
-
-@admin.register(Contacts)
-class ContactsAdmin(admin.ModelAdmin):
-    list_display = ('profile', 'first_name', 'last_name', 'email')
+    list_display = ('username', 'first_name', 'last_name', 'email', 'first_login_date', 'is_active', 'state')
 
 
 @admin.register(Media)

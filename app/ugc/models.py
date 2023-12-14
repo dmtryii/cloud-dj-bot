@@ -44,6 +44,15 @@ class Profile(models.Model):
     username = models.TextField(
         verbose_name='Username',
     )
+    first_name = models.TextField(
+        verbose_name='First Name',
+    )
+    last_name = models.TextField(
+        verbose_name='Last Name',
+    )
+    email = models.EmailField(
+        verbose_name='Email',
+    )
     first_login_date = models.DateTimeField(
         verbose_name='First login date',
         auto_now_add=True,
@@ -126,30 +135,6 @@ class MediaProfileHashtag(models.Model):
         verbose_name = 'Media Profile Hashtag'
         verbose_name_plural = 'Media Profiles Hashtags'
         unique_together = ('media_profile', 'hashtag')
-
-
-class Contacts(models.Model):
-    profile = models.ForeignKey(
-        'Profile',
-        on_delete=models.CASCADE,
-        related_name='contacts'
-    )
-    first_name = models.TextField(
-        verbose_name='First Name'
-    )
-    last_name = models.TextField(
-        verbose_name='Last Name'
-    )
-    email = models.EmailField(
-        verbose_name='Email',
-    )
-
-    def __str__(self):
-        return f'Email: {self.email}'
-
-    class Meta:
-        verbose_name = 'Contact'
-        verbose_name_plural = 'Contacts'
 
 
 class CurrentAction(models.Model):

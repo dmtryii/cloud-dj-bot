@@ -1,7 +1,14 @@
-from .profile_service import create_or_get_profile
+from aiogram import types
+
+from .profile_service import add_profile
 from ..models import Message, Profile
 
 
-def save_message(profile: Profile, text_message: str) -> None:
-    profile = create_or_get_profile(profile)
-    Message(profile=profile, text=text_message).save()
+async def save_message(profile: Profile, message: types.Message) -> None:
+    profile = await add_profile(profile)
+    await Message(
+        external_id=message.message_id,
+        content_type=message.content_type,
+        profile=profile,
+        text=message.text,
+    ).asave()

@@ -1,13 +1,12 @@
 from pytube import YouTube
 
+from .profile_service import add_profile
 from ..models import Media, MediaProfile, Profile
 
 
-def create_or_get_media(profile: Profile, url: str) -> Media:
-    from .profile_service import create_or_get_profile
-
+async def add_media(url: str) -> Media:
     youtube = YouTube(url)
-    media, created = Media.objects.get_or_create(
+    media, created = await Media.objects.aget_or_create(
         external_id=youtube.video_id,
         defaults={
             'title': youtube.title,
@@ -16,22 +15,20 @@ def create_or_get_media(profile: Profile, url: str) -> Media:
             'channel': youtube.author,
         }
     )
-
-    if created:
-        profile = create_or_get_profile(profile)
-        add_media_to_profile(profile, media)
-
     return media
 
 
-def get_media_by_profile(profile: Profile, media: Media) -> MediaProfile:
-    return MediaProfile.objects.filter(
+async def get_media_by_profile(profile: Profile, media: Media) -> MediaProfile:
+    return await MediaProfile.objects.filter(
         profile=profile,
-        media=media).first()
+        media=media).afirst()
 
 
-def add_media_to_profile(profile: Profile, media: Media) -> MediaProfile:
-    return MediaProfile.objects.create(
+async def add_media_to_profile(profile: Profile, media: Media) -> MediaProfile:
+    profile = await add_profile(profile)
+    media = await add_media(media.url)
+    media_profile, created = await MediaProfile.objects.aget_or_create(
         profile=profile,
         media=media,
     )
+    return media_profile

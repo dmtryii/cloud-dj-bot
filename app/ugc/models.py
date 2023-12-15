@@ -37,7 +37,11 @@ class Media(models.Model):
 
 
 class Profile(models.Model):
-    external_id = models.PositiveIntegerField(
+    BASIC = 'BASIC'
+    WAIT_FOR_EMAIL = 'WAIT_FOR_EMAIL'
+    WAIT_FOR_MEDIA = 'WAIT_FOR_MEDIA'
+
+    external_id = models.BigIntegerField(
         verbose_name='Profile ID',
         unique=True,
     )
@@ -63,8 +67,9 @@ class Profile(models.Model):
     )
 
     PROFILE_STATE_CHOICES = {
-        ('BASIC', 'Basic State'),
-        ('WAIT_FOR_EMAIL', 'Wait for Email'),
+        (BASIC, 'Basic State'),
+        (WAIT_FOR_EMAIL, 'Wait for Email'),
+        (WAIT_FOR_MEDIA, 'Wait for Media'),
     }
     state = models.CharField(
         choices=PROFILE_STATE_CHOICES,
@@ -137,24 +142,13 @@ class MediaProfileHashtag(models.Model):
         unique_together = ('media_profile', 'hashtag')
 
 
-class CurrentAction(models.Model):
-    profile = models.ForeignKey(
-        'Profile',
-        verbose_name='Profile',
-        on_delete=models.CASCADE
-    )
-    media = models.ForeignKey(
-        'Media',
-        verbose_name='Media',
-        on_delete=models.CASCADE
-    )
-
-    class Meta:
-        verbose_name = 'Current Action'
-        verbose_name_plural = 'Current Actions'
-
-
 class Message(models.Model):
+    external_id = models.PositiveIntegerField(
+        verbose_name='Message ID',
+    )
+    content_type = models.TextField(
+        verbose_name='Content Type',
+    )
     profile = models.ForeignKey(
         'Profile',
         verbose_name='Profile',

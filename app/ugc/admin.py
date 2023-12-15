@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile, Media, MediaProfile, Hashtag, CurrentAction
+from .models import Profile, Media, MediaProfile, Hashtag
 
 
 @admin.register(Profile)
@@ -11,11 +11,6 @@ class ProfileAdmin(admin.ModelAdmin):
 @admin.register(Media)
 class MediaAdmin(admin.ModelAdmin):
     list_display = ('external_id', 'title', 'url', 'channel', 'duration', 'date_of_addition')
-
-
-@admin.register(CurrentAction)
-class CurrentActionAdmin(admin.ModelAdmin):
-    list_display = ('profile', 'media')
 
 
 @admin.register(MediaProfile)

@@ -47,12 +47,15 @@ class Profile(models.Model):
     )
     username = models.TextField(
         verbose_name='Username',
+        null=True,
     )
     first_name = models.TextField(
         verbose_name='First Name',
+        null=True,
     )
     last_name = models.TextField(
         verbose_name='Last Name',
+        null=True,
     )
     email = models.EmailField(
         verbose_name='Email',

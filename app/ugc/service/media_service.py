@@ -18,6 +18,11 @@ async def add_media(url: str) -> Media:
     return media
 
 
+async def get_all_media_by_profile(profile: Profile):
+    profile = await add_profile(profile)
+    return [media async for media in Media.objects.filter(mediaprofile__profile=profile)]
+
+
 async def get_media_by_profile(profile: Profile, media: Media) -> MediaProfile:
     return await MediaProfile.objects.filter(
         profile=profile,

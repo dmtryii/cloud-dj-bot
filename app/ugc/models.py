@@ -7,6 +7,16 @@ class Media(models.Model):
         unique=True,
         max_length=255,
     )
+    telegram_video_file_id = models.CharField(
+        verbose_name='Telegram Video File ID',
+        unique=True,
+        max_length=255,
+    )
+    telegram_audio_file_id = models.CharField(
+        verbose_name='Telegram Audio File ID',
+        unique=True,
+        max_length=255,
+    )
     title = models.TextField(
         verbose_name='Title',
         null=False,

@@ -14,37 +14,46 @@ from pytube import YouTube
 
 from .keyboards import SelectDownloadType, Action, select_download_type, pagination, Navigation, Pagination
 from ...models import Media
-from ...service.media_service import add_media, add_media_to_profile, get_all_media_by_profile
+from ...service.media_service import add_media, add_media_to_profile, get_all_media_by_profile__reverse
 from ...service.message_service import save_message
 from ...service.profile_service import map_profile
-from ...utils.media_utils import download_video, get_media_info_cart
+from ...utils.media_utils import download_video, get_media_info_cart, download_audio
 
 bot = Bot(token=settings.TOKEN)
 dp = Dispatcher()
 
 
-async def send_media(chat_id: int, media: Media, send_func, caption: str = '') -> None:
-    path = await download_video(media.url)
-    try:
-        if send_func == bot.send_video:
-            await send_func(chat_id=chat_id, caption=caption,
-                            video=FSInputFile(path))
-        elif send_func == bot.send_audio:
-            await send_func(chat_id=chat_id, caption=caption,
-                            audio=FSInputFile(path))
-    except Exception as e:
-        print(f"Error sending media: {e}")
-    finally:
-        os.remove(path)
+async def send_media(chat_id: int, media: Media, send_func, download_func, caption: str = '') -> None:
+    telegram_file_id_attr = f'telegram_{send_func.__name__.replace("send_", "")}_file_id'
+    file_type = send_func.__name__.replace("send_", "")
+
+    telegram_file_id = getattr(media, telegram_file_id_attr, None)
+
+    if telegram_file_id:
+        await send_func(chat_id=chat_id, caption=caption, **{file_type: telegram_file_id})
+    else:
+        path = await download_func(media.url)
+        try:
+            msg = await send_func(chat_id=chat_id, caption=caption, **{file_type: FSInputFile(path)})
+            setattr(media, telegram_file_id_attr, getattr(msg, file_type).file_id)
+            await media.asave()
+        except Exception as e:
+            print(f"Error sending media: {e}")
+        finally:
+            await asyncio.sleep(1)
+            try:
+                os.remove(path)
+            except Exception as e:
+                print(f"Error removing file: {e}")
 
 
 async def send_video(chat_id: int, media: Media) -> None:
-    await send_media(chat_id, media, bot.send_video,
+    await send_media(chat_id, media, bot.send_video, download_video,
                      caption=f'{media.title}\n\nChannel: {media.channel}\n')
 
 
 async def send_audio(chat_id: int, media: Media) -> None:
-    await send_media(chat_id, media, bot.send_audio,
+    await send_media(chat_id, media, bot.send_audio, download_audio,
                      caption=f'Channel: {media.channel}')
 
 
@@ -69,10 +78,15 @@ async def youtube_url_handler(message: types.Message) -> None:
     )
 
 
-@dp.message(Command('playlist'))
-async def show_playlist(message: types.Message) -> None:
+@dp.message(Command('history'))
+async def show_history(message: types.Message) -> None:
+    await message.delete()
     profile = await map_profile(message.chat)
-    medias = await get_all_media_by_profile(profile)
+    medias = await get_all_media_by_profile__reverse(profile)
+
+    if len(medias) == 0:
+        await message.answer(text="You don't have a media history yet")
+        return
 
     await message.answer(
         text=(await get_media_info_cart(medias[0])),
@@ -83,7 +97,7 @@ async def show_playlist(message: types.Message) -> None:
 @dp.callback_query(Pagination.filter(F.navigation.in_([Navigation.PREV_STEP, Navigation.NEXT_STEP])))
 async def pagination_playlist(query: CallbackQuery, callback_data: Pagination) -> None:
     profile = await map_profile(query.message.chat)
-    medias = await get_all_media_by_profile(profile)
+    medias = await get_all_media_by_profile__reverse(profile)
 
     page_num = int(callback_data.page)
     total_pages = len(medias)

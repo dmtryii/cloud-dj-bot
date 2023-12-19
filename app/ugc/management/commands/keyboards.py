@@ -17,7 +17,7 @@ class Navigation(str, Enum):
 
 class SelectDownloadType(CallbackData, prefix="dow"):
     action: Action
-    youtube_video_id: str
+    media_id: int
 
 
 class Pagination(CallbackData, prefix="pag"):
@@ -25,20 +25,20 @@ class Pagination(CallbackData, prefix="pag"):
     page: int
 
 
-def select_download_type(youtube_video_id: str) -> InlineKeyboardMarkup:
+def select_download_type(media_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text='Video',
                              callback_data=SelectDownloadType(action=Action.VIDEO_DOWNLOAD,
-                                                              youtube_video_id=youtube_video_id).pack()),
+                                                              media_id=media_id).pack()),
         InlineKeyboardButton(text='Audio',
                              callback_data=SelectDownloadType(action=Action.AUDIO_DOWNLOAD,
-                                                              youtube_video_id=youtube_video_id).pack())
+                                                              media_id=media_id).pack())
     )
     return builder.as_markup()
 
 
-def pagination(youtube_video_id: str, page: int = 0) -> InlineKeyboardMarkup:
+def pagination(media_id: int, page: int = 0) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text='<',
@@ -49,9 +49,9 @@ def pagination(youtube_video_id: str, page: int = 0) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(text='Video',
                              callback_data=SelectDownloadType(action=Action.VIDEO_DOWNLOAD,
-                                                              youtube_video_id=youtube_video_id).pack()),
+                                                              media_id=media_id).pack()),
         InlineKeyboardButton(text='Audio',
                              callback_data=SelectDownloadType(action=Action.AUDIO_DOWNLOAD,
-                                                              youtube_video_id=youtube_video_id).pack())
+                                                              media_id=media_id).pack())
     )
     return builder.as_markup()

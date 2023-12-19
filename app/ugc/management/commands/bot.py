@@ -10,13 +10,13 @@ from aiogram.types import FSInputFile, CallbackQuery
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from pytube import YouTube
 
 from .keyboards import SelectDownloadType, Action, select_download_type, pagination, Navigation, Pagination
+from ...dto.media_dto import map_youtube_media
+from ...dto.profile_dto import map_profile
 from ...models import Media
-from ...service.media_service import add_media, add_media_to_profile, get_all_media_by_profile__reverse
+from ...service.media_service import add_media, add_media_to_profile, get_all_media_by_profile__reverse, get_media_by_id
 from ...service.message_service import save_message
-from ...service.profile_service import map_profile
 from ...utils.media_utils import download_video, get_media_info_cart, download_audio
 
 bot = Bot(token=settings.TOKEN)
@@ -62,19 +62,13 @@ async def youtube_url_handler(message: types.Message) -> None:
     profile = await map_profile(message.chat)
     youtube_url = message.text
 
-    try:
-        youtube_video_id = YouTube(youtube_url).video_id
-    except Exception as e:
-        print(f"Error fetching video ID: {e}")
-        await message.reply("Invalid YouTube URL or unable to fetch video ID.")
-        return
-
-    media = await add_media(url=youtube_url)
+    media_dto = await map_youtube_media(youtube_url)
+    media = await add_media(media_dto)
     await add_media_to_profile(media=media, profile=profile)
 
     await message.reply(
         text=(await get_media_info_cart(media)),
-        reply_markup=select_download_type(youtube_video_id)
+        reply_markup=select_download_type(media.id)
     )
 
 
@@ -90,12 +84,12 @@ async def show_history(message: types.Message) -> None:
 
     await message.answer(
         text=(await get_media_info_cart(medias[0])),
-        reply_markup=pagination(medias[0].external_id)
+        reply_markup=pagination(medias[0].id)
     )
 
 
 @dp.callback_query(Pagination.filter(F.navigation.in_([Navigation.PREV_STEP, Navigation.NEXT_STEP])))
-async def pagination_playlist(query: CallbackQuery, callback_data: Pagination) -> None:
+async def pagination_history(query: CallbackQuery, callback_data: Pagination) -> None:
     profile = await map_profile(query.message.chat)
     medias = await get_all_media_by_profile__reverse(profile)
 
@@ -105,20 +99,20 @@ async def pagination_playlist(query: CallbackQuery, callback_data: Pagination) -
     page = max(0, min(page_num - 1, total_pages - 1))
 
     if callback_data.navigation == Navigation.NEXT_STEP:
-        page = min(page_num + 1, total_pages - 1)
+        page = min(page_num, total_pages - 1)
 
     with suppress(TelegramBadRequest):
+        current_media = medias[page]
         await query.message.edit_text(
-            await get_media_info_cart(medias[page]),
-            reply_markup=pagination(medias[page].external_id, page)
+            await get_media_info_cart(current_media),
+            reply_markup=pagination(current_media.id, page)
         )
     await query.answer()
 
 
 async def handle_media_download_callback(query: CallbackQuery, callback_data: SelectDownloadType,
                                          send_function) -> None:
-    video_url = f"https://www.youtube.com/watch?v={callback_data.youtube_video_id}"
-    media = await add_media(url=video_url)
+    media = await get_media_by_id(callback_data.media_id)
     await send_function(chat_id=query.message.chat.id, media=media)
 
 

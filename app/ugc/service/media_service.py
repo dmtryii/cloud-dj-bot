@@ -1,21 +1,24 @@
-from pytube import YouTube
-
 from .profile_service import add_profile
 from ..models import Media, MediaProfile, Profile
 
 
-async def add_media(url: str) -> Media:
-    youtube = YouTube(url)
+async def add_media(media: Media) -> Media:
     media, created = await Media.objects.aget_or_create(
-        external_id=youtube.video_id,
+        external_id=media.external_id,
         defaults={
-            'title': youtube.title,
-            'url': url,
-            'duration': youtube.length,
-            'channel': youtube.author,
+            'telegram_video_file_id': media.telegram_video_file_id,
+            'telegram_audio_file_id': media.telegram_audio_file_id,
+            'title': media.title,
+            'url': media.url,
+            'duration': media.duration,
+            'channel': media.channel,
         }
     )
     return media
+
+
+async def get_media_by_id(media_id: int) -> Media:
+    return await Media.objects.aget(id=media_id)
 
 
 async def get_all_media_by_profile__reverse(profile: Profile):
@@ -31,7 +34,7 @@ async def get_media_by_profile(profile: Profile, media: Media) -> MediaProfile:
 
 async def add_media_to_profile(profile: Profile, media: Media) -> MediaProfile:
     profile = await add_profile(profile)
-    media = await add_media(media.url)
+    media = await add_media(media)
     media_profile, created = await MediaProfile.objects.aget_or_create(
         profile=profile,
         media=media,

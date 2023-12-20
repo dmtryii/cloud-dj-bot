@@ -10,8 +10,10 @@ from aiogram.types import CallbackQuery
 from django.conf import settings
 from django.core.management import BaseCommand
 
+from . import messages
 from .keyboards import (SelectDownloadType, Action, select_download_type, media_pagination, Navigation, Pagination,
                         Favorite, main_menu)
+from .messages import get_media_info_cart
 from ...dto.media_dto import map_youtube_media
 from ...dto.profile_dto import map_profile
 from ...models import Media
@@ -20,7 +22,7 @@ from ...service.media_service import add_media, add_media_to_profile, get_all_me
     get_media_by_id, get_media_by_profile, get_all_favorite_media_by_profile__reverse
 from ...service.message_service import save_message
 from ...service.profile_service import add_profile
-from ...utils.media_utils import download_video, get_media_info_cart, download_audio
+from ...utils.media_utils import download_video, download_audio
 
 bot = Bot(token=settings.TOKEN)
 dp = Dispatcher()
@@ -47,7 +49,7 @@ async def youtube_url_handler(message: types.Message) -> None:
     await add_media_to_profile(media=media, profile=profile)
 
     await message.answer(
-        text=(await get_media_info_cart(media)),
+        text=get_media_info_cart(media),
         reply_markup=select_download_type(media.id),
         parse_mode='HTML'
     )
@@ -68,7 +70,7 @@ async def show_media(message: types.Message) -> None:
         await message.answer(text=f"You don't have {media_type} media yet")
         return
 
-    answer_text = await get_media_info_cart(medias[0])
+    answer_text = get_media_info_cart(medias[0], title=media_type.upper())
 
     await message.answer(
         text=answer_text,
@@ -99,9 +101,10 @@ async def pagination_media_callback(query: CallbackQuery, callback_data: Paginat
     with suppress(TelegramBadRequest):
         current_media = medias[page]
         await query.message.edit_text(
-            text=await get_media_info_cart(current_media),
+            text=get_media_info_cart(current_media, media_type.upper()),
             reply_markup=media_pagination(current_media.id,
-                                          media_type, page,
+                                          media_type,
+                                          page=page,
                                           total_pages=len(medias)),
             parse_mode='HTML'
         )
@@ -144,15 +147,18 @@ async def handle_media_favorite_callback(query: CallbackQuery, callback_data: Fa
 async def start_command_handler(message: types.Message) -> None:
     await message.delete()
     profile = await map_profile(message.chat)
-    await message.answer(f'''
-    Hello {profile.first_name}! Nice to meet you, follow the instructions (/help) for working with me.
-    ''', reply_markup=main_menu)
+    answer = messages.start_message(profile)
+    await message.answer(
+        text=answer,
+        reply_markup=main_menu,
+        parse_mode='HTML')
 
 
 @dp.message()
 async def default_handler(message: types.Message) -> None:
     profile = await map_profile(message.chat)
-    await message.reply('I do not understand you')
+    answer = await messages.default_message()
+    await message.reply(answer)
     await save_message(profile, message)
 
 

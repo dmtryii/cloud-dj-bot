@@ -10,7 +10,7 @@ main_menu = ReplyKeyboardMarkup(
         [
             KeyboardButton(text="History")
         ],
-[
+        [
             KeyboardButton(text="Favorite")
         ],
     ],
@@ -60,7 +60,8 @@ def select_download_type(media_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def media_pagination(media_id: int, types: str, page: int = 0, total_pages: int = 0) -> InlineKeyboardMarkup:
+def media_pagination(media_id: int, types: str,
+                     page: int = 0, total_pages: int = 0) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text='<',

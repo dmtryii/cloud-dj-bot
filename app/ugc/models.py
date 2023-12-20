@@ -106,6 +106,10 @@ class MediaProfile(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Profile',
     )
+    is_favorite = models.BooleanField(
+        verbose_name='Is Favorite',
+        default=False,
+    )
     date_added = models.DateTimeField(
         verbose_name='Date Added',
         auto_now_add=True,
@@ -118,8 +122,8 @@ class MediaProfile(models.Model):
 
 
 class Hashtag(models.Model):
-    title = models.CharField(
-        verbose_name='Title',
+    name = models.CharField(
+        verbose_name='Name',
         max_length=255,
     )
     create_at = models.DateTimeField(
@@ -128,7 +132,7 @@ class Hashtag(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return self.name
 
     class Meta:
         verbose_name = 'Hashtag'

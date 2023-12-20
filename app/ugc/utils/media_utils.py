@@ -32,6 +32,6 @@ async def download_audio(url: str) -> str | None:
 
 async def get_media_info_cart(media: Media) -> str:
     duration = divmod(media.duration, 60)
-    return (f'{media.title}\n\n' +
+    return (f'<a href="{media.url}">{media.title}</a>\n' +
             f'Channel: {media.channel}\n' +
             f'Duration: {duration[0]}:{duration[1]}\n')

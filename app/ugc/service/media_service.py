@@ -26,6 +26,12 @@ async def get_all_media_by_profile__reverse(profile: Profile):
     return [media async for media in Media.objects.filter(mediaprofile__profile=profile)][::-1]
 
 
+async def get_all_favorite_media_by_profile__reverse(profile: Profile):
+    profile = await add_profile(profile)
+    return [media async for media in Media.objects.filter(mediaprofile__profile=profile,
+                                                          mediaprofile__is_favorite=True)][::-1]
+
+
 async def get_media_by_profile(profile: Profile, media: Media) -> MediaProfile:
     return await MediaProfile.objects.filter(
         profile=profile,

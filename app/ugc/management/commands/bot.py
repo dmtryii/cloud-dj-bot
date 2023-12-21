@@ -18,36 +18,51 @@ from ...dto.media_dto import map_youtube_media
 from ...dto.profile_dto import map_profile
 from ...models import Media
 from ...service.bot_service import send_media
-from ...service.media_service import add_media, add_media_to_profile, get_all_media_by_profile__reverse, \
+from ...service.media_service import get_or_create_media, add_media_to_profile, get_all_media_by_profile__reverse, \
     get_media_by_id, get_media_by_profile, get_all_favorite_media_by_profile__reverse
 from ...service.message_service import save_message
-from ...service.profile_service import add_profile
-from ...utils.media_utils import download_video, download_audio
+from ...service.profile_service import get_or_create_profile, get_role_by_profile
 
 bot = Bot(token=settings.TOKEN)
 dp = Dispatcher()
 
 
 async def send_video(chat_id: int, media: Media) -> None:
-    await send_media(chat_id, media, bot.send_video, download_video,
-                     caption=f'{media.title}\n\nChannel: {media.channel}\n')
+    caption = messages.video_caption(media)
+    warning = messages.video_download_limit_message()
+    await send_media(chat_id, media, bot.send_video, bot.send_message,
+                     caption=caption,
+                     warning=warning)
 
 
 async def send_audio(chat_id: int, media: Media) -> None:
-    await send_media(chat_id, media, bot.send_audio, download_audio,
-                     caption=f'Channel: {media.channel}')
+    caption = messages.video_caption(media)
+    warning = messages.video_download_limit_message()
+    await send_media(chat_id, media, bot.send_audio, bot.send_message,
+                     caption=caption,
+                     warning=warning)
 
 
 @dp.message(F.text.regexp(r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$'))
 async def youtube_url_handler(message: types.Message) -> None:
     await message.delete()
-    profile = await map_profile(message.chat)
     youtube_url = message.text
 
+    profile_dto = await map_profile(message.chat)
     media_dto = await map_youtube_media(youtube_url)
-    media = await add_media(media_dto)
-    await add_media_to_profile(media=media, profile=profile)
+    profile = await get_or_create_profile(profile_dto)
+    media = await get_or_create_media(media_dto)
 
+    role = await get_role_by_profile(profile)
+
+    if media.duration > role.allowed_media_length:
+        await message.answer(
+            text=messages.video_len_limit_message(role),
+            parse_mode='HTML'
+        )
+        return
+
+    await add_media_to_profile(media=media, profile=profile)
     await message.answer(
         text=get_media_info_cart(media),
         reply_markup=select_download_type(media.id),
@@ -130,7 +145,7 @@ async def handle_audio_download_callback(query: CallbackQuery, callback_data: Se
 @dp.callback_query(Favorite.filter(F.action == Action.MEDIA_TO_FAVORITES))
 async def handle_media_favorite_callback(query: CallbackQuery, callback_data: Favorite) -> None:
     profile = await map_profile(query.message.chat)
-    profile = await add_profile(profile)
+    profile = await get_or_create_profile(profile)
     media = await get_media_by_id(callback_data.media_id)
 
     media_profile = await get_media_by_profile(profile, media)
@@ -146,7 +161,8 @@ async def handle_media_favorite_callback(query: CallbackQuery, callback_data: Fa
 @dp.message(CommandStart())
 async def start_command_handler(message: types.Message) -> None:
     await message.delete()
-    profile = await map_profile(message.chat)
+    profile_dto = await map_profile(message.chat)
+    profile = await get_or_create_profile(profile_dto)
     answer = messages.start_message(profile)
     await message.answer(
         text=answer,

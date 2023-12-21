@@ -93,7 +93,7 @@ async def pagination_media_callback(query: CallbackQuery, callback_data: Paginat
 
     page_num = int(callback_data.page)
     total_pages = len(medias)
-    page = max(0, min(page_num - 1, total_pages - 1))
+    page = max(0, min(page_num, total_pages - 1))
 
     if callback_data.navigation == Navigation.NEXT_STEP:
         page = min(page_num, total_pages - 1)

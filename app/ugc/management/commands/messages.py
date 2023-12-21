@@ -1,4 +1,4 @@
-from ...models import Profile, Media
+from ...models import Profile, Media, Role
 
 
 async def default_message() -> str:
@@ -18,6 +18,30 @@ You can:
 
 Just send me a link to the <b>media resource</b> and follow the instructions.
     '''
+
+
+def video_len_limit_message(role: Role) -> str:
+    return f'''
+Sorry, you are <b>not</b> allowed to download videos longer 
+than <b>{convert_seconds(role.allowed_media_length)}</b> minutes.
+
+You can contact the administrator for help.
+        '''
+
+
+def video_download_limit_message() -> str:
+    return f'''
+You have exceeded the number of download attempts allowed. 
+Try again later.
+        '''
+
+
+def video_caption(media: Media) -> str:
+    return f'{media.title}\n\nChannel: {media.channel}\n'
+
+
+def audio_caption(media: Media) -> str:
+    return f'Channel: {media.channel}'
 
 
 def get_media_info_cart(media: Media, title: str = '') -> str:

@@ -1,11 +1,11 @@
 from aiogram import types
 
-from .profile_service import add_profile
+from .profile_service import get_or_create_profile
 from ..models import Message, Profile
 
 
 async def save_message(profile: Profile, message: types.Message) -> None:
-    profile = await add_profile(profile)
+    profile = await get_or_create_profile(profile)
     await Message(
         external_id=message.message_id,
         content_type=message.content_type,

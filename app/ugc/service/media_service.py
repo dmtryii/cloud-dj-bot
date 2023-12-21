@@ -1,8 +1,8 @@
-from .profile_service import add_profile
+from .profile_service import get_or_create_profile
 from ..models import Media, MediaProfile, Profile
 
 
-async def add_media(media: Media) -> Media:
+async def get_or_create_media(media: Media) -> Media:
     media, created = await Media.objects.aget_or_create(
         external_id=media.external_id,
         defaults={
@@ -22,12 +22,12 @@ async def get_media_by_id(media_id: int) -> Media:
 
 
 async def get_all_media_by_profile__reverse(profile: Profile):
-    profile = await add_profile(profile)
+    profile = await get_or_create_profile(profile)
     return [media async for media in Media.objects.filter(mediaprofile__profile=profile)][::-1]
 
 
 async def get_all_favorite_media_by_profile__reverse(profile: Profile):
-    profile = await add_profile(profile)
+    profile = await get_or_create_profile(profile)
     return [media async for media in Media.objects.filter(mediaprofile__profile=profile,
                                                           mediaprofile__is_favorite=True)][::-1]
 
@@ -39,8 +39,8 @@ async def get_media_by_profile(profile: Profile, media: Media) -> MediaProfile:
 
 
 async def add_media_to_profile(profile: Profile, media: Media) -> MediaProfile:
-    profile = await add_profile(profile)
-    media = await add_media(media)
+    profile = await get_or_create_profile(profile)
+    media = await get_or_create_media(media)
     media_profile, created = await MediaProfile.objects.aget_or_create(
         profile=profile,
         media=media,

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Media(models.Model):
@@ -44,6 +45,29 @@ class Media(models.Model):
         verbose_name_plural = 'Medias'
 
 
+class Role(models.Model):
+    name = models.CharField(
+        verbose_name='Role name',
+        max_length=255,
+        unique=True,
+    )
+    allowed_downloads_per_day = models.PositiveIntegerField(
+        verbose_name='Allowed Downloads Per Day',
+        null=False,
+    )
+    allowed_media_length = models.PositiveIntegerField(
+        verbose_name='Allowed Media Length',
+        null=False,
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Role'
+        verbose_name_plural = 'Roles'
+
+
 class Profile(models.Model):
     BASIC = 'BASIC'
     WAIT_FOR_EMAIL = 'WAIT_FOR_EMAIL'
@@ -87,6 +111,14 @@ class Profile(models.Model):
         default='BASIC',
     )
 
+    role = models.ForeignKey(
+        'Role',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Role',
+    )
+
     def __str__(self):
         return f'#{self.external_id} {self.username}'
 
@@ -119,6 +151,25 @@ class MediaProfile(models.Model):
         verbose_name = 'Media Profile'
         verbose_name_plural = 'Media Profiles'
         unique_together = ('media', 'profile')
+
+
+class MediaDownload(models.Model):
+    profile = models.ForeignKey(
+        'Profile',
+        on_delete=models.CASCADE,
+    )
+    media = models.ForeignKey(
+        'Media',
+        on_delete=models.CASCADE,
+    )
+    download_date = models.DateTimeField(
+        verbose_name='Date Downloaded',
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = 'Media Download'
+        verbose_name_plural = 'Media Downloads'
 
 
 class Hashtag(models.Model):

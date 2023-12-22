@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 
 class Media(models.Model):
@@ -51,8 +50,8 @@ class Role(models.Model):
         max_length=255,
         unique=True,
     )
-    allowed_downloads_per_day = models.PositiveIntegerField(
-        verbose_name='Allowed Downloads Per Day',
+    delay_between_downloads = models.PositiveIntegerField(
+        verbose_name='Delay between downloads',
         null=False,
     )
     allowed_media_length = models.PositiveIntegerField(

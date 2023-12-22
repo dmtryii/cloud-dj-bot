@@ -11,20 +11,25 @@ async def add_download_media(profile: Profile, media: Media):
     )
 
 
-async def count_download_in_period__by_profile(profile: Profile, start_time: datetime, end_time: datetime) -> int:
-    return len([md async for md in MediaDownload.objects.filter(profile=profile,
-                                                                download_date__gte=start_time,
-                                                                download_date__lte=end_time)])
+async def last_download_media(profile: Profile) -> MediaDownload:
+    return await MediaDownload.objects.filter(profile=profile).alast()
 
 
 async def can_download_media(profile: Profile) -> bool:
     role = await get_role_by_profile(profile)
-    allowed_downloads_per_day = role.allowed_downloads_per_day
-    today = datetime.datetime.today()
-    count_downloads = await count_download_in_period__by_profile(profile,
-                                                                 start_time=today - datetime.timedelta(days=1),
-                                                                 end_time=today)
-    if count_downloads > allowed_downloads_per_day:
-        return False
+    delay_between_downloads = role.delay_between_downloads
 
-    return True
+    last_download = await last_download_media(profile)
+
+    if last_download is None:
+        return True
+
+    last_download_time = last_download.download_date
+
+    current_time = datetime.datetime.now(datetime.timezone.utc)
+    time_since_last_download = current_time - last_download_time
+
+    if time_since_last_download.total_seconds() >= delay_between_downloads:
+        return True
+
+    return False

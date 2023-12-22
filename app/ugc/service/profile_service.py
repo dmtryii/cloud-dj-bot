@@ -22,7 +22,7 @@ async def get_default_role() -> Role:
     role, _ = await Role.objects.aget_or_create(
         name='DefaultRole',
         defaults={
-            'allowed_downloads_per_day': 5,
+            'delay_between_downloads': 60,
             'allowed_media_length': 600,
         }
     )

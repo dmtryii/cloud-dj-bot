@@ -16,8 +16,9 @@ from .keyboards import (SelectDownloadType, Action, select_download_type, media_
 from .messages import get_media_info_cart
 from ...dto.media_dto import map_youtube_media
 from ...dto.profile_dto import map_profile
-from ...models import Media
+from ...models import Media, Profile
 from ...service.bot_service import send_media
+from ...service.current_message_service import get_current_action, set_current_action
 from ...service.media_service import get_or_create_media, add_media_to_profile, get_all_media_by_profile__reverse, \
     get_media_by_id, get_media_by_profile, get_all_favorite_media_by_profile__reverse
 from ...service.message_service import save_message
@@ -36,11 +37,20 @@ async def send_video(chat_id: int, media: Media) -> None:
 
 
 async def send_audio(chat_id: int, media: Media) -> None:
-    caption = messages.video_caption(media)
+    caption = messages.audio_caption(media)
     warning = messages.video_download_limit_message()
     await send_media(chat_id, media, bot.send_audio, bot.send_message,
                      caption=caption,
                      warning=warning)
+
+
+async def swap_current_action(profile: Profile, message: types.Message) -> None:
+    current_action = await get_current_action(profile)
+    if current_action:
+        await set_current_action(profile, message.message_id)
+        await bot.delete_message(chat_id=message.chat.id, message_id=current_action.message_id)
+    else:
+        await set_current_action(profile, message.message_id)
 
 
 @dp.message(F.text.regexp(r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$'))
@@ -63,11 +73,12 @@ async def youtube_url_handler(message: types.Message) -> None:
         return
 
     await add_media_to_profile(media=media, profile=profile)
-    await message.answer(
+    msg = await message.answer(
         text=get_media_info_cart(media),
         reply_markup=select_download_type(media.id),
         parse_mode='HTML'
     )
+    await swap_current_action(profile, msg)
 
 
 @dp.message(F.text.lower().in_(['history', 'favorite']))
@@ -87,13 +98,14 @@ async def show_media(message: types.Message) -> None:
 
     answer_text = get_media_info_cart(medias[0], title=media_type.upper())
 
-    await message.answer(
+    msg = await message.answer(
         text=answer_text,
         reply_markup=media_pagination(medias[0].id,
                                       media_type,
                                       total_pages=len(medias)),
         parse_mode='HTML'
     )
+    await swap_current_action(profile, msg)
 
 
 @dp.callback_query(Pagination.filter(F.navigation.in_([Navigation.PREV_STEP, Navigation.NEXT_STEP])))

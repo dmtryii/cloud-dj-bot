@@ -233,3 +233,17 @@ class Message(models.Model):
     class Meta:
         verbose_name = 'Message'
         verbose_name_plural = 'Messages'
+
+
+class CurrentAction(models.Model):
+    profile = models.ForeignKey(
+        'Profile',
+        on_delete=models.CASCADE,
+    )
+    message_id = models.PositiveIntegerField(
+        verbose_name='Message ID',
+    )
+
+    class Meta:
+        verbose_name = 'CurrentAction'
+        verbose_name_plural = 'CurrentActions'

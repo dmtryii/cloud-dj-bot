@@ -15,19 +15,12 @@ async def send_media(chat_id: int, media: Media, send_media_func, send_warning_f
     file_id = getattr(media, file_id_attr, None)
 
     if file_id:
-        await send_existing_media(chat_id, send_media_func, file_id, caption)
+        await send_media_func(chat_id=chat_id, caption=caption, **{file_id_attr.split('_')[1]: file_id})
     else:
-        await process_new_media(chat_id, media, send_media_func, send_warning_func, file_id_attr, caption, warning)
+        await handle_missing_file_id(chat_id, media, send_media_func, send_warning_func, caption, warning, file_id_attr)
 
 
-async def send_existing_media(chat_id, send_media_func, file_id, caption):
-    try:
-        await send_media_func(chat_id=chat_id, caption=caption, **{file_id.split('_')[1]: file_id})
-    except Exception as e:
-        print(f"Error sending existing media: {e}")
-
-
-async def process_new_media(chat_id, media, send_media_func, send_warning_func, file_id_attr, caption, warning):
+async def handle_missing_file_id(chat_id, media, send_media_func, send_warning_func, caption, warning, file_id_attr):
     profile = await get_profile_by_external_id(external_id=chat_id)
 
     if not await can_download_media(profile):
@@ -39,15 +32,19 @@ async def process_new_media(chat_id, media, send_media_func, send_warning_func, 
     path = None
     try:
         download_func = download_video if send_media_func.__name__ == 'send_video' else download_audio
-        path = await download_func(media.url)
 
-        msg = await send_media_func(chat_id=chat_id, caption=caption, **{file_id_attr.split('_')[1]: FSInputFile(path)})
-        setattr(media, file_id_attr, getattr(msg, file_id_attr.split('_')[1]).file_id)
-        await media.asave()
+        path = await download_func(media.url)
+        await send_with_file_id(chat_id, caption, file_id_attr, media, path, send_media_func)
     except Exception as e:
-        print(f"Error sending new media: {e}")
+        print(f"Error sending media: {e}")
     finally:
         await cleanup_file(path)
+
+
+async def send_with_file_id(chat_id, caption, file_id_attr, media, path, send_media_func):
+    msg = await send_media_func(chat_id=chat_id, caption=caption, **{file_id_attr.split('_')[1]: FSInputFile(path)})
+    setattr(media, file_id_attr, getattr(msg, file_id_attr.split('_')[1]).file_id)
+    await media.asave()
 
 
 async def cleanup_file(path):

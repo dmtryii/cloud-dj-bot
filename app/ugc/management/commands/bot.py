@@ -22,24 +22,30 @@ from ...service.current_message_service import get_current_action, set_current_a
 from ...service.media_service import get_or_create_media, add_media_to_profile, get_all_media_by_profile__reverse, \
     get_media_by_id, get_media_by_profile, get_all_favorite_media_by_profile__reverse
 from ...service.message_service import save_message
-from ...service.profile_service import get_or_create_profile, get_role_by_profile
+from ...service.profile_service import get_or_create_profile, get_role_by_profile, get_profile_by_external_id
 
 bot = Bot(token=settings.TOKEN)
 dp = Dispatcher()
 
 
-async def send_video(chat_id: int, media: Media) -> None:
+async def send_video(query: CallbackQuery, media: Media) -> None:
+    chat_id = query.message.chat.id
+    profile = await get_profile_by_external_id(chat_id)
+    role = await get_role_by_profile(profile)
     caption = messages.video_caption(media)
-    warning = messages.video_download_limit_message()
-    await send_media(chat_id, media, bot.send_video, bot.send_message,
+    warning = messages.video_download_limit_message(role.delay_between_downloads)
+    await send_media(query, media, bot.send_video,
                      caption=caption,
                      warning=warning)
 
 
-async def send_audio(chat_id: int, media: Media) -> None:
+async def send_audio(query: CallbackQuery, media: Media) -> None:
+    chat_id = query.message.chat.id
+    profile = await get_profile_by_external_id(chat_id)
+    role = await get_role_by_profile(profile)
     caption = messages.audio_caption(media)
-    warning = messages.video_download_limit_message()
-    await send_media(chat_id, media, bot.send_audio, bot.send_message,
+    warning = messages.video_download_limit_message(role.delay_between_downloads)
+    await send_media(query, media, bot.send_audio,
                      caption=caption,
                      warning=warning)
 
@@ -141,7 +147,7 @@ async def pagination_media_callback(query: CallbackQuery, callback_data: Paginat
 async def handle_media_download_callback(query: CallbackQuery, callback_data: SelectDownloadType,
                                          send_function) -> None:
     media = await get_media_by_id(callback_data.media_id)
-    await send_function(chat_id=query.message.chat.id, media=media)
+    await send_function(query=query, media=media)
 
 
 @dp.callback_query(SelectDownloadType.filter(F.action == Action.VIDEO_DOWNLOAD))

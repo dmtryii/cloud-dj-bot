@@ -29,19 +29,19 @@ You can contact the administrator for help.
         '''
 
 
-def video_download_limit_message() -> str:
+def video_download_limit_message(second: int) -> str:
     return f'''
-You have exceeded the number of download attempts allowed. 
-Try again later.
+You are allowed to download media with a delay 
+of {convert_seconds(second)}
         '''
 
 
 def video_caption(media: Media) -> str:
-    return f'{media.title}\n\nChannel: {media.channel}\n'
+    return f'{media.title}\nChannel: {media.channel}\n@mcloudqbot'
 
 
 def audio_caption(media: Media) -> str:
-    return f'Channel: {media.channel}'
+    return f'Channel: {media.channel}\n@mcloudqbot'
 
 
 def get_media_info_cart(media: Media, title: str = '') -> str:

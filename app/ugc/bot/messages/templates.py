@@ -1,4 +1,4 @@
-from ...models import Profile, Media, Role
+from ...models import Profile, Role, Media
 
 
 async def default_message() -> str:

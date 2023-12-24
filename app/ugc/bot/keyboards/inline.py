@@ -1,23 +1,8 @@
 from enum import Enum
 
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-
-main_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="History")
-        ],
-        [
-            KeyboardButton(text="Favorite")
-        ],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=True,
-    input_field_placeholder='Choose an action from the menu'
-)
 
 
 class Action(str, Enum):

@@ -6,7 +6,7 @@ from aiogram.types import FSInputFile, CallbackQuery
 from .download_media_service import can_download_media, add_download_media
 from .profile_service import get_profile_by_external_id
 from ..models import Media
-from ..utils.media_utils import download_video, download_audio
+from ..utils.downloaders.media_downloader import YouTubeDownloader
 
 
 async def send_media(query: CallbackQuery, media: Media, send_media_func,
@@ -36,9 +36,13 @@ async def handle_missing_file_id(query: CallbackQuery, media: Media,
 
     path = None
     try:
-        download_func = download_video if send_media_func.__name__ == 'send_video' else download_audio
+        yt_downloader = YouTubeDownloader(media)
 
-        path = await download_func(media.url)
+        if send_media_func.__name__ == 'send_video':
+            path = await yt_downloader.download_video()
+        else:
+            path = await yt_downloader.download_audio()
+
         await send_with_file_id(chat_id, caption, file_id_attr, media, path, send_media_func)
     except Exception as e:
         print(f"Error sending media: {e}")

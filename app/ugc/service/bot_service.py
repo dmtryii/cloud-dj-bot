@@ -6,7 +6,7 @@ from aiogram.types import FSInputFile, CallbackQuery
 from .download_media_service import can_download_media, add_download_media
 from .profile_service import get_profile_by_external_id
 from ..models import Media
-from ..utils.downloaders.media_downloader import YouTubeDownloader
+from ..utils.downloaders.media_downloader import YouTubeDownloader, MediaDownloader, InstagramDownloader
 
 
 async def send_media(query: CallbackQuery, media: Media, send_media_func,
@@ -19,11 +19,21 @@ async def send_media(query: CallbackQuery, media: Media, send_media_func,
         await send_media_func(chat_id=chat_id,
                               caption=caption, **{file_id_attr.split('_')[1]: file_id})
     else:
-        await handle_missing_file_id(query, media, send_media_func,
-                                     caption, warning, file_id_attr)
+        social_network = media.external_id.split('_')[0]
+
+        if social_network == 'yt':
+            downloader = YouTubeDownloader(media)
+        elif social_network == 'inst':
+            downloader = InstagramDownloader(media)
+        else:
+            return
+
+        await handle_missing_file_id(query=query, media=media, downloader=downloader,
+                                     send_media_func=send_media_func, caption=caption,
+                                     warning=warning, file_id_attr=file_id_attr)
 
 
-async def handle_missing_file_id(query: CallbackQuery, media: Media,
+async def handle_missing_file_id(query: CallbackQuery, media: Media, downloader: MediaDownloader,
                                  send_media_func, caption, warning, file_id_attr):
     chat_id = query.message.chat.id
     profile = await get_profile_by_external_id(external_id=chat_id)
@@ -36,12 +46,10 @@ async def handle_missing_file_id(query: CallbackQuery, media: Media,
 
     path = None
     try:
-        yt_downloader = YouTubeDownloader(media)
-
         if send_media_func.__name__ == 'send_video':
-            path = await yt_downloader.download_video()
+            path = await downloader.download_video()
         else:
-            path = await yt_downloader.download_audio()
+            path = await downloader.download_audio()
 
         await send_with_file_id(chat_id, caption, file_id_attr, media, path, send_media_func)
     except Exception as e:

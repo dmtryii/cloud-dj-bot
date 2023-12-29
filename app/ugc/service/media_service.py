@@ -21,6 +21,11 @@ async def get_media_by_id(media_id: int) -> Media:
     return await Media.objects.aget(id=media_id)
 
 
+async def get_media_id_without_prefix(media: Media) -> str:
+    prefix = media.external_id.split('_')[0]
+    return media.external_id[len(prefix)+1:]
+
+
 async def get_all_media_by_profile__reverse(profile: Profile):
     profile = await get_or_create_profile(profile)
     return [media async for media in Media.objects.filter(mediaprofile__profile=profile)][::-1]

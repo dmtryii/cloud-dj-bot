@@ -126,3 +126,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TOKEN = os.environ.get('BOT_TOKEN')
 MEDIA_FILES = os.path.join(BASE_DIR, 'media_files')
+
+INST_USERNAME = os.environ.get('INST_USERNAME')
+INST_PASSWORD = os.environ.get('INST_PASSWORD')

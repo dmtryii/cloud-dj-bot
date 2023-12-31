@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile, Media, MediaProfile, Hashtag, Role
+from .models import Profile, Media, MediaProfile, Role
 
 
 @admin.register(Role)
@@ -21,8 +21,3 @@ class MediaAdmin(admin.ModelAdmin):
 @admin.register(MediaProfile)
 class MediaProfileAdmin(admin.ModelAdmin):
     list_display = ('media', 'profile', 'date_added')
-
-
-@admin.register(Hashtag)
-class HashtagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'create_at')

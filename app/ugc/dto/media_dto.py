@@ -37,7 +37,7 @@ async def map_instagram_media(url: str) -> Media:
 
 
 def extract_shortcode(url: str) -> Optional[str]:
-    pattern = re.compile(r'https?://(?:www\.)?instagram\.com/(?:reels|p)/([^/]+)/?')
+    pattern = re.compile(r'https?://(?:www\.)?instagram\.com/(?:reel|reels|p)/([^/]+)/?')
     match = pattern.match(url)
 
     if match:

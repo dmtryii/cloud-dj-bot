@@ -8,11 +8,12 @@ from ...dto.profile_dto import map_profile
 from ...management.commands.bot import swap_current_action
 from ...service.media_service import get_or_create_media, add_media_to_profile
 from ...service.profile_service import get_or_create_profile, get_role_by_profile
+from ...utils import regular_expressions
 
 router = Router()
 
 
-@router.message(F.text.regexp(r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$'))
+@router.message(F.text.regexp(regular_expressions.YOUTUBE))
 async def youtube_url_handler(message: types.Message) -> None:
     await message.delete()
     youtube_url = message.text
@@ -40,7 +41,7 @@ async def youtube_url_handler(message: types.Message) -> None:
     await swap_current_action(profile, msg)
 
 
-@router.message(F.text.regexp(r'https?://(?:www\.)?instagram\.com/(?:reels|p)/([^/]+)/?'))
+@router.message(F.text.regexp(regular_expressions.INSTAGRAM))
 async def instagram_url_handler(message: types.Message) -> None:
     await message.delete()
     media_dto = await map_instagram_media(message.text)
@@ -72,4 +73,3 @@ async def instagram_url_handler(message: types.Message) -> None:
         parse_mode='HTML'
     )
     await swap_current_action(profile, msg)
-

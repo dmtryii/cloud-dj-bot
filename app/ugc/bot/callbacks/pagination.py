@@ -6,19 +6,25 @@ from aiogram.types import CallbackQuery
 
 from ..keyboards.inline import Pagination, Navigation, media_pagination
 from ..messages.templates import get_media_info_cart
-from ...dto.profile_dto import map_profile
-from ...service.media_service import get_all_media_by_profile__reverse, get_all_favorite_media_by_profile__reverse
+from ...mappers.profile_mapper import ProfileMapper
+from ...service.media_service import MediaService
+from ...service.profile_service import ProfileService
 
 router = Router()
 
 
 @router.callback_query(Pagination.filter(F.navigation.in_([Navigation.PREV_STEP, Navigation.NEXT_STEP])))
 async def pagination_media_callback(query: CallbackQuery, callback_data: Pagination) -> None:
-    profile = await map_profile(query.message.chat)
+    profile_service = ProfileService()
+    media_service = MediaService(profile_service)
+
+    profile = ProfileMapper(query.message.chat).map()
     media_type = callback_data.types
 
-    types_mapping = {'history': get_all_media_by_profile__reverse,
-                     'favorite': get_all_favorite_media_by_profile__reverse}
+    types_mapping = {
+        'history': media_service.get_all_by_profile__reverse,
+        'favorite': media_service.get_all_favorite_by_profile__reverse
+    }
 
     medias = await types_mapping[media_type](profile)
 

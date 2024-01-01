@@ -10,7 +10,7 @@ from pytube import YouTube
 
 from ..media_utils import InstagramLoader
 from ...models import Media
-from ...service.media_service import get_media_id_without_prefix
+from ...service.media_service import MediaService
 
 
 class MediaDownloader(ABC):
@@ -51,8 +51,9 @@ class YouTubeDownloader(MediaDownloader):
 
 
 class InstagramDownloader(MediaDownloader):
-    def __init__(self, media: Media):
+    def __init__(self, media: Media, media_service: MediaService):
         super().__init__(media)
+        self.media_service = media_service
 
     async def download_video(self) -> Optional[str]:
         inst_loader_singleton = InstagramLoader()
@@ -60,7 +61,7 @@ class InstagramDownloader(MediaDownloader):
 
         inst_loader.dirname_pattern = self.output_path
 
-        shortcode = await get_media_id_without_prefix(self.media)
+        shortcode = await self.media_service.get_id_without_prefix(self.media)
         post = Post.from_shortcode(context=inst_loader.context, shortcode=shortcode)
         filename = os.path.join(self.output_path, f"{post.owner_username}_{shortcode}")
         inst_loader.filename_pattern = filename
@@ -90,7 +91,8 @@ class InstagramDownloader(MediaDownloader):
 
         return None
 
-    def convert_video_to_audio(self, video_path: str) -> str:
+    @staticmethod
+    def convert_video_to_audio(video_path: str) -> str:
         audio_path = video_path.replace(".mp4", ".mp3")
 
         video_clip = VideoFileClip(video_path)

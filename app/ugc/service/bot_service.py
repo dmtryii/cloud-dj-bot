@@ -3,8 +3,9 @@ import os
 
 from aiogram.types import FSInputFile, CallbackQuery
 
-from .download_media_service import can_download_media, add_download_media
-from .profile_service import get_profile_by_external_id
+from .download_media_service import DownloadMediaService
+from .media_service import MediaService
+from .profile_service import ProfileService
 from ..models import Media
 from ..utils.downloaders.media_downloader import YouTubeDownloader, MediaDownloader, InstagramDownloader
 
@@ -13,8 +14,11 @@ class BotMediaService:
     VIDEO = 'video'
     AUDIO = 'audio'
 
-    def __init__(self, query: CallbackQuery, media: Media, caption: str = '', warning: str = ''):
+    def __init__(self, query: CallbackQuery, profile_service: ProfileService,
+                 download_media_service: DownloadMediaService, media: Media, caption: str = '', warning: str = ''):
         self._query = query
+        self._profile_service = profile_service
+        self._download_media_service = download_media_service
         self._media = media
         self._caption = caption
         self._warning = warning
@@ -41,7 +45,7 @@ class BotMediaService:
         if social_network == 'yt':
             downloader = YouTubeDownloader(self._media)
         elif social_network == 'inst':
-            downloader = InstagramDownloader(self._media)
+            downloader = InstagramDownloader(self._media, MediaService(self._profile_service))
         else:
             return
 
@@ -49,13 +53,13 @@ class BotMediaService:
 
     async def _handle_new_media_file(self, downloader: MediaDownloader, media_type: str) -> None:
         chat_id = self._query.message.chat.id
-        profile = await get_profile_by_external_id(external_id=chat_id)
+        profile = await self._profile_service.get_by_external_id(external_id=chat_id)
 
-        if not await can_download_media(profile):
+        if not await self._download_media_service.can_download_media(profile):
             await self._query.answer(self._warning)
             return
 
-        await add_download_media(profile, self._media)
+        await self._download_media_service.add_download(profile, self._media)
         await self._query.answer('Downloading, please wait...')
 
         path = None
@@ -82,7 +86,8 @@ class BotMediaService:
             msg = await self._query.message.answer_audio(audio=FSInputFile(path), caption=self._caption)
             self._media.telegram_audio_file_id = msg.audio.file_id
 
-    async def _cleanup_file(self, path: str) -> None:
+    @staticmethod
+    async def _cleanup_file(path: str) -> None:
         await asyncio.sleep(1)
         try:
             if path:

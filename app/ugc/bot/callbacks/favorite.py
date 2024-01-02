@@ -11,13 +11,13 @@ router = Router()
 
 @router.callback_query(Favorite.filter(F.action == Action.MEDIA_TO_FAVORITES))
 async def handle_media_favorite_callback(query: CallbackQuery, callback_data: Favorite) -> None:
-    profile_service = ProfileService()
-    media_service = MediaService(profile_service)
+    profile_dto = ProfileMapper(query.message.chat).map()
+    profile_service = ProfileService(profile_dto)
 
-    profile = ProfileMapper(query.message.chat).map()
-    profile = await profile_service.get_or_create(profile)
-    media = await media_service.get_by_id(callback_data.media_id)
-    media_profile = await media_service.get_by_profile(profile, media)
+    media = await MediaService.get_by_id(callback_data.media_id, profile_service)
+    media_service = await MediaService.get_instance_by_id(media.id, profile_service)
+
+    media_profile = await media_service.get_by_profile()
 
     if media_profile.is_favorite:
         media_profile.is_favorite = False

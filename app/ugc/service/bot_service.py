@@ -45,21 +45,19 @@ class BotMediaService:
         if social_network == 'yt':
             downloader = YouTubeDownloader(self._media)
         elif social_network == 'inst':
-            downloader = InstagramDownloader(self._media, MediaService(self._profile_service))
+            media_service = await MediaService.get_instance_by_id(self._media.id, self._profile_service)
+            downloader = InstagramDownloader(self._media, media_service)
         else:
             return
 
         await self._handle_new_media_file(downloader, media_type)
 
     async def _handle_new_media_file(self, downloader: MediaDownloader, media_type: str) -> None:
-        chat_id = self._query.message.chat.id
-        profile = await self._profile_service.get_by_external_id(external_id=chat_id)
-
-        if not await self._download_media_service.can_download(profile):
+        if not await self._download_media_service.can_download():
             await self._query.answer(self._warning)
             return
 
-        await self._download_media_service.add_download(profile, self._media)
+        await self._download_media_service.add_download(self._media)
         await self._query.answer('Downloading, please wait...')
 
         path = None

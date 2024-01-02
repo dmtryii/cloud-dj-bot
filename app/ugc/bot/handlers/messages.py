@@ -16,17 +16,19 @@ router = Router()
 async def show_media(message: types.Message) -> None:
     await message.delete()
 
-    profile_service = ProfileService()
-    media_service = MediaService(profile_service)
-    profile = ProfileMapper(message.chat).map()
+    profile_dto = ProfileMapper(message.chat).map()
+    profile_service = ProfileService(profile_dto)
 
-    types_mapping = {
-        'history': media_service.get_all_by_profile__reverse,
-        'favorite': media_service.get_all_favorite_by_profile__reverse
-    }
+    media_service = MediaService(media=None, profile_service=profile_service)
 
     media_type = message.text.lower()
-    medias = await types_mapping[media_type](profile)
+
+    if media_type == 'history':
+        medias = await media_service.get_all_by_profile__reverse()
+    elif media_type == 'favorite':
+        medias = await media_service.get_all_favorite_by_profile__reverse()
+    else:
+        return
 
     if len(medias) == 0:
         await message.answer(text=f"You don't have {media_type} media yet")
@@ -41,14 +43,14 @@ async def show_media(message: types.Message) -> None:
                                       total_pages=len(medias)),
         parse_mode='HTML'
     )
-    await swap_current_action(profile, msg)
+    await swap_current_action(profile_dto, msg)
 
 
 @router.message()
 async def default_handler(message: types.Message) -> None:
-    profile_service = ProfileService()
+    profile_dto = ProfileMapper(message.chat).map()
+    profile_service = ProfileService(profile_dto)
     message_service = MessageService(profile_service)
-    profile = ProfileMapper(message.chat).map()
     answer = await templates.default_message()
     await message.reply(answer)
-    await message_service.save(profile, message)
+    await message_service.save(message)

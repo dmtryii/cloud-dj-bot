@@ -3,6 +3,7 @@ from aiogram.types import CallbackQuery
 
 from ..keyboards.inline import SelectDownloadType, Action
 from ..messages import templates
+from ...mappers.profile_mapper import ProfileMapper
 from ...service.bot_service import BotMediaService
 from ...service.download_media_service import DownloadMediaService
 from ...service.media_service import MediaService
@@ -13,12 +14,12 @@ router = Router()
 
 async def handle_media_download_callback(query: CallbackQuery, callback_data: SelectDownloadType,
                                          media_type: str) -> None:
-    profile_service = ProfileService()
+    profile_dto = ProfileMapper(query.message.chat).map()
+    profile_service = ProfileService(profile_dto)
+    media = await MediaService.get_by_id(callback_data.media_id, profile_service)
     download_media_service = DownloadMediaService(profile_service)
 
-    media = await MediaService.get_by_id(callback_data.media_id)
-    profile = await profile_service.get_by_external_id(query.message.chat.id)
-    role = await profile_service.get_role(profile)
+    role = await profile_service.get_role()
     caption = templates.video_caption(media)
     warning = templates.video_download_limit_message(role.delay_between_downloads)
 

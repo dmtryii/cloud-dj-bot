@@ -13,8 +13,11 @@ router = Router()
 @router.message(CommandStart())
 async def start_command_handler(message: types.Message) -> None:
     await message.delete()
+
     profile_dto = ProfileMapper(message.chat).map()
-    profile = await ProfileService().get_or_create(profile_dto)
+    profile_service = ProfileService(profile_dto)
+    profile = await profile_service.get()
+
     answer = templates.start_message(profile)
     await message.answer(
         text=answer,

@@ -15,18 +15,19 @@ router = Router()
 
 @router.callback_query(Pagination.filter(F.navigation.in_([Navigation.PREV_STEP, Navigation.NEXT_STEP])))
 async def pagination_media_callback(query: CallbackQuery, callback_data: Pagination) -> None:
-    profile_service = ProfileService()
-    media_service = MediaService(profile_service)
+    profile_dto = ProfileMapper(query.message.chat).map()
+    profile_service = ProfileService(profile_dto)
 
-    profile = ProfileMapper(query.message.chat).map()
+    media_service = MediaService(media=None, profile_service=profile_service)
+
     media_type = callback_data.types
 
-    types_mapping = {
-        'history': media_service.get_all_by_profile__reverse,
-        'favorite': media_service.get_all_favorite_by_profile__reverse
-    }
-
-    medias = await types_mapping.get(media_type, lambda x: [])(profile)
+    if media_type == 'history':
+        medias = await media_service.get_all_by_profile__reverse()
+    elif media_type == 'favorite':
+        medias = await media_service.get_all_favorite_by_profile__reverse()
+    else:
+        return
 
     page_num = int(callback_data.page)
     total_pages = len(medias)

@@ -61,7 +61,7 @@ class InstagramDownloader(MediaDownloader):
 
         inst_loader.dirname_pattern = self.output_path
 
-        shortcode = await self.media_service.get_id_without_prefix(self.media)
+        shortcode = await self.media_service.get_id_without_prefix()
         post = Post.from_shortcode(context=inst_loader.context, shortcode=shortcode)
         filename = os.path.join(self.output_path, f"{post.owner_username}_{shortcode}")
         inst_loader.filename_pattern = filename

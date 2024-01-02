@@ -55,7 +55,7 @@ class BotMediaService:
         chat_id = self._query.message.chat.id
         profile = await self._profile_service.get_by_external_id(external_id=chat_id)
 
-        if not await self._download_media_service.can_download_media(profile):
+        if not await self._download_media_service.can_download(profile):
             await self._query.answer(self._warning)
             return
 

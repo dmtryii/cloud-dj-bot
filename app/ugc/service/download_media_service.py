@@ -8,7 +8,7 @@ class DownloadMediaService:
     def __init__(self, profile_service: ProfileService):
         self._profile_service = profile_service
 
-    async def can_download_media(self, profile: Profile) -> bool:
+    async def can_download(self, profile: Profile) -> bool:
         role = await self._profile_service.get_role(profile)
         delay_between_downloads = role.delay_between_downloads
 

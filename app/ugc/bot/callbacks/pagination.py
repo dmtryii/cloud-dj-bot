@@ -26,7 +26,7 @@ async def pagination_media_callback(query: CallbackQuery, callback_data: Paginat
         'favorite': media_service.get_all_favorite_by_profile__reverse
     }
 
-    medias = await types_mapping[media_type](profile)
+    medias = await types_mapping.get(media_type, lambda x: [])(profile)
 
     page_num = int(callback_data.page)
     total_pages = len(medias)

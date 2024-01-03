@@ -189,24 +189,6 @@ class Hashtag(models.Model):
         verbose_name_plural = 'Hashtags'
 
 
-class MediaProfileHashtag(models.Model):
-    media_profile = models.ForeignKey(
-        'MediaProfile',
-        on_delete=models.CASCADE,
-        verbose_name='MediaProfile',
-    )
-    hashtag = models.ForeignKey(
-        'Hashtag',
-        on_delete=models.CASCADE,
-        verbose_name='Hashtag',
-    )
-
-    class Meta:
-        verbose_name = 'Media Profile Hashtag'
-        verbose_name_plural = 'Media Profiles Hashtags'
-        unique_together = ('media_profile', 'hashtag')
-
-
 class Message(models.Model):
     external_id = models.PositiveIntegerField(
         verbose_name='Message ID',

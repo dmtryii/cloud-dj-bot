@@ -10,7 +10,7 @@ from ...mappers.profile_mapper import ProfileDTO
 from ...service.current_action_service import CurrentActionService
 from ...service.profile_service import ProfileService
 
-bot = Bot(token=settings.TOKEN)
+bot = Bot(token=settings.BOT_TOKEN)
 dp = Dispatcher()
 
 

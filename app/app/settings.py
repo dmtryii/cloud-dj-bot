@@ -124,7 +124,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-TOKEN = os.environ.get('BOT_TOKEN')
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
+BOT_NAME = os.environ.get('BOT_NAME')
+BOT_ADMIN_NAME = os.environ.get('BOT_ADMIN_NAME')
+
 MEDIA_FILES = os.path.join(BASE_DIR, 'media_files')
 
 INST_USERNAME = os.environ.get('INST_USERNAME')

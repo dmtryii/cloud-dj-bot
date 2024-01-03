@@ -1,7 +1,9 @@
 from ...models import Profile, Role, Media
 
+from django.conf import settings
 
-async def default_message() -> str:
+
+def default_message() -> str:
     return 'I do not understand you'
 
 
@@ -14,9 +16,10 @@ You can:
 - download media (video or audio)
 - view history
 - add media to favorites
-- create playlists (adding tags)
 
 Just send me a link to the <b>media resource</b> and follow the instructions.
+
+<b>Available social networks - YouTube and Instagram.</b>
     '''
 
 
@@ -25,7 +28,7 @@ def video_len_limit_message(role: Role) -> str:
 Sorry, you are <b>not</b> allowed to download videos longer 
 than <b>{convert_seconds(role.allowed_media_length)}</b> minutes.
 
-You can contact the administrator for help.
+You can contact the administrator for help - {settings.BOT_ADMIN_NAME}.
         '''
 
 
@@ -37,17 +40,17 @@ of {convert_seconds(second)}
 
 
 def video_caption(media: Media) -> str:
-    return f'{media.title}\nChannel: {media.channel}\n@mcloudqbot'
+    return f'{media.title}\nAuthor: {media.channel}\n{settings.BOT_NAME}'
 
 
 def audio_caption(media: Media) -> str:
-    return f'Channel: {media.channel}\n@mcloudqbot'
+    return f'Author: {media.channel}\n{settings.BOT_NAME}'
 
 
 def get_media_info_cart(media: Media, title: str = '') -> str:
     return (f'<b>{title}</b>\n' +
             f'<a href="{media.url}">{media.title}</a>\n' +
-            f'Channel: {media.channel}\n' +
+            f'Author: {media.channel}\n' +
             f'Duration: {convert_seconds(media.duration)}')
 
 

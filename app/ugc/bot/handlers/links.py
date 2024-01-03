@@ -21,14 +21,14 @@ async def handle_media_url(message: types.Message, media_dto: MediaDTO) -> None:
 
     media_service = MediaService(media_dto, profile_service)
 
-    profile = await profile_service.get()
     role = await profile_service.get_role()
 
     if media_dto.duration > role.allowed_media_length:
-        await message.answer(
+        msg = await message.answer(
             text=templates.video_len_limit_message(role),
             parse_mode='HTML'
         )
+        await swap_current_action(profile_dto, msg)
         return
 
     media = await media_service.get()
@@ -39,7 +39,7 @@ async def handle_media_url(message: types.Message, media_dto: MediaDTO) -> None:
         reply_markup=select_download_type(media_id=media.id),
         parse_mode='HTML'
     )
-    await swap_current_action(profile, msg)
+    await swap_current_action(profile_dto, msg)
 
 
 @router.message(F.text.regexp(regular_expressions.YOUTUBE))

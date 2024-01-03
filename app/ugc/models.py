@@ -68,10 +68,6 @@ class Role(models.Model):
 
 
 class Profile(models.Model):
-    BASIC = 'BASIC'
-    WAIT_FOR_EMAIL = 'WAIT_FOR_EMAIL'
-    WAIT_FOR_MEDIA = 'WAIT_FOR_MEDIA'
-
     external_id = models.BigIntegerField(
         verbose_name='Profile ID',
         unique=True,
@@ -88,28 +84,10 @@ class Profile(models.Model):
         verbose_name='Last Name',
         null=True,
     )
-    email = models.EmailField(
-        verbose_name='Email',
-    )
     first_login_date = models.DateTimeField(
         verbose_name='First login date',
         auto_now_add=True,
     )
-    is_active = models.BooleanField(
-        verbose_name='Is Active',
-        default=False,
-    )
-
-    PROFILE_STATE_CHOICES = {
-        (BASIC, 'Basic State'),
-        (WAIT_FOR_EMAIL, 'Wait for Email'),
-        (WAIT_FOR_MEDIA, 'Wait for Media'),
-    }
-    state = models.CharField(
-        choices=PROFILE_STATE_CHOICES,
-        default='BASIC',
-    )
-
     role = models.ForeignKey(
         'Role',
         on_delete=models.SET_NULL,
@@ -169,24 +147,6 @@ class MediaDownload(models.Model):
     class Meta:
         verbose_name = 'Media Download'
         verbose_name_plural = 'Media Downloads'
-
-
-class Hashtag(models.Model):
-    name = models.CharField(
-        verbose_name='Name',
-        max_length=255,
-    )
-    create_at = models.DateTimeField(
-        verbose_name='Create At',
-        auto_now_add=True,
-    )
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Hashtag'
-        verbose_name_plural = 'Hashtags'
 
 
 class Message(models.Model):

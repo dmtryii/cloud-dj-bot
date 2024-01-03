@@ -10,7 +10,7 @@ class RoleAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('username', 'first_name', 'last_name', 'email', 'first_login_date', 'is_active', 'state', 'role')
+    list_display = ('username', 'first_name', 'last_name', 'first_login_date', 'role')
 
 
 @admin.register(Media)

@@ -32,6 +32,9 @@ class MediaService:
 
         return await cls(media, profile_service).get()
 
+    async def get_social_network(self) -> str:
+        return self._media.external_id.split('_')[0]
+
     async def get_id_without_prefix(self) -> str:
         media = await self.get()
         prefix = media.external_id.split('_')[0]

@@ -4,10 +4,9 @@ import os
 from aiogram.types import FSInputFile, CallbackQuery
 
 from .download_media_service import DownloadMediaService
-from .media_service import MediaService
 from .profile_service import ProfileService
 from ..models import Media
-from ..utils.downloaders.media_downloader import YouTubeDownloader, MediaDownloader, InstagramDownloader
+from ..utils.downloaders.media_downloader import MediaDownloader
 
 
 class BotMediaService:
@@ -15,56 +14,40 @@ class BotMediaService:
     AUDIO = 'audio'
 
     def __init__(self, query: CallbackQuery, profile_service: ProfileService,
-                 download_media_service: DownloadMediaService, media: Media, caption: str = '', warning: str = ''):
+                 download_media_service: DownloadMediaService, downloader: MediaDownloader):
         self._query = query
         self._profile_service = profile_service
         self._download_media_service = download_media_service
-        self._media = media
-        self._caption = caption
-        self._warning = warning
+        self._downloader = downloader
 
-    async def send_video(self) -> None:
-        telegram_file_id = self._media.telegram_video_file_id
+    async def send_video(self, media: Media, caption: str = '', warning: str = '') -> None:
+        telegram_file_id = media.telegram_video_file_id
 
         if telegram_file_id:
-            await self._query.message.answer_video(video=telegram_file_id, caption=self._caption)
+            await self._query.message.answer_video(video=telegram_file_id, caption=caption)
         else:
-            await self._handle_external_media(self.VIDEO)
+            await self._handle_new_media_file(media, self.VIDEO, warning=warning)
 
-    async def send_audio(self) -> None:
-        telegram_file_id = self._media.telegram_audio_file_id
+    async def send_audio(self, media: Media, caption: str = '', warning: str = '') -> None:
+        telegram_file_id = media.telegram_audio_file_id
 
         if telegram_file_id:
-            await self._query.message.answer_audio(audio=telegram_file_id, caption=self._caption)
+            await self._query.message.answer_audio(audio=telegram_file_id, caption=caption)
         else:
-            await self._handle_external_media(self.AUDIO)
+            await self._handle_new_media_file(media, self.AUDIO, warning=warning)
 
-    async def _handle_external_media(self, media_type: str) -> None:
-        social_network = self._media.external_id.split('_')[0]
-
-        if social_network == 'yt':
-            downloader = YouTubeDownloader(self._media)
-        elif social_network == 'inst':
-            media_service = await MediaService.get_instance_by_id(self._media.id, self._profile_service)
-            downloader = InstagramDownloader(self._media, media_service)
-        else:
-            return
-
-        await self._handle_new_media_file(downloader, media_type)
-
-    async def _handle_new_media_file(self, downloader: MediaDownloader, media_type: str) -> None:
+    async def _handle_new_media_file(self, media: Media, media_type: str, warning: str = '') -> None:
         if not await self._download_media_service.can_download():
-            await self._query.answer(self._warning)
+            await self._query.answer(warning)
             return
 
-        await self._download_media_service.add_download(self._media)
+        await self._download_media_service.add_download(media)
         await self._query.answer('Downloading, please wait...')
 
         path = None
         try:
-            path = await self._download_media(downloader, media_type)
-            await self._send_media_message(path, media_type)
-            await self._media.asave()
+            path = await self._download_media(self._downloader, media_type)
+            await self._send_media_message(media, path, media_type)
         except Exception as e:
             print(f"Error sending media: {e}")
         finally:
@@ -76,13 +59,14 @@ class BotMediaService:
         elif media_type == self.AUDIO:
             return await downloader.download_audio()
 
-    async def _send_media_message(self, path: str, media_type: str) -> None:
+    async def _send_media_message(self, media: Media, path: str, media_type: str, caption: str = '') -> None:
         if media_type == self.VIDEO:
-            msg = await self._query.message.answer_video(video=FSInputFile(path), caption=self._caption)
-            self._media.telegram_video_file_id = msg.video.file_id
+            msg = await self._query.message.answer_video(video=FSInputFile(path), caption=caption)
+            media.telegram_video_file_id = msg.video.file_id
         elif media_type == self.AUDIO:
-            msg = await self._query.message.answer_audio(audio=FSInputFile(path), caption=self._caption)
-            self._media.telegram_audio_file_id = msg.audio.file_id
+            msg = await self._query.message.answer_audio(audio=FSInputFile(path), caption=caption)
+            media.telegram_audio_file_id = msg.audio.file_id
+        await media.asave()
 
     @staticmethod
     async def _cleanup_file(path: str) -> None:

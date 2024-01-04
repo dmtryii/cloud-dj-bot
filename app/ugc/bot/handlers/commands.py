@@ -5,8 +5,8 @@ from aiogram.filters import CommandStart, Command
 from ..keyboards.inline import media_pagination
 from ..messages import templates
 from ..messages.templates import get_media_info_cart
-from ...management.commands.bot import swap_current_action
 from ...mappers.profile_mapper import ProfileMapper
+from ...service.current_action_service import CurrentActionService
 from ...service.media_service import MediaService
 from ...service.profile_service import ProfileService
 
@@ -19,6 +19,7 @@ async def show_media(message: types.Message) -> None:
 
     profile_dto = ProfileMapper(message.chat).map()
     profile_service = ProfileService(profile_dto)
+    current_action_service = CurrentActionService(profile_service)
 
     media_service = MediaService(media=None, profile_service=profile_service)
 
@@ -44,7 +45,7 @@ async def show_media(message: types.Message) -> None:
                                       total_pages=len(medias)),
         parse_mode='HTML'
     )
-    await swap_current_action(profile_dto, msg)
+    await current_action_service.swap_current_action(msg.message_id)
 
 
 @router.message(CommandStart())
@@ -53,10 +54,11 @@ async def start_command_handler(message: types.Message) -> None:
 
     profile_dto = ProfileMapper(message.chat).map()
     profile_service = ProfileService(profile_dto)
+    current_action_service = CurrentActionService(profile_service)
     profile = await profile_service.get()
 
     answer = templates.start_message(profile)
     msg = await message.answer(
         text=answer,
         parse_mode='HTML')
-    await swap_current_action(profile_dto, msg)
+    await current_action_service.swap_current_action(msg.message_id)

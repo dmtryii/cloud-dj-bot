@@ -28,12 +28,28 @@ class DownloadMediaService:
 
         return False
 
-    async def add_download(self, media: Media) -> None:
+    async def get_message_id(self, media: Media) -> Optional[int]:
         profile = await self._profile_service.get()
-        return await MediaDownload.objects.acreate(
+        media_download = await MediaDownload.objects.filter(profile=profile, media=media).afirst()
+
+        if media_download:
+            return media_download.message_id
+
+    async def add_download(self, message_id: int, media: Media) -> None:
+        profile = await self._profile_service.get()
+        media_download, created = await MediaDownload.objects.aget_or_create(
             profile=profile,
             media=media,
+            defaults={
+                "message_id": message_id
+            }
         )
+
+        if not created:
+            media_download.message_id = message_id
+            await media_download.asave()
+
+        return media_download
 
     async def last_download(self) -> Optional[MediaDownload]:
         profile = await self._profile_service.get()

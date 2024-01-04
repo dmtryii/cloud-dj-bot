@@ -131,6 +131,9 @@ class MediaProfile(models.Model):
 
 
 class MediaDownload(models.Model):
+    message_id = models.PositiveIntegerField(
+        verbose_name='Message ID',
+    )
     profile = models.ForeignKey(
         'Profile',
         on_delete=models.CASCADE,

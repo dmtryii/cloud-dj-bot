@@ -5,7 +5,7 @@ from ..messages import templates
 from ..messages.templates import get_media_info_cart
 from ...mappers.media_mapper import YouTubeMapper, InstagramMapper, MediaDTO
 from ...mappers.profile_mapper import ProfileMapper
-from ...management.commands.bot import swap_current_action
+from ...service.current_action_service import CurrentActionService
 from ...service.media_service import MediaService
 from ...service.profile_service import ProfileService
 from ...utils import regular_expressions
@@ -18,6 +18,7 @@ async def handle_media_url(message: types.Message, media_dto: MediaDTO) -> None:
 
     profile_dto = ProfileMapper(message.chat).map()
     profile_service = ProfileService(profile_dto)
+    current_action_service = CurrentActionService(profile_service)
 
     media_service = MediaService(media_dto, profile_service)
 
@@ -28,7 +29,7 @@ async def handle_media_url(message: types.Message, media_dto: MediaDTO) -> None:
             text=templates.video_len_limit_message(role),
             parse_mode='HTML'
         )
-        await swap_current_action(profile_dto, msg)
+        await current_action_service.swap_current_action(msg.message_id)
         return
 
     media = await media_service.get()
@@ -39,7 +40,7 @@ async def handle_media_url(message: types.Message, media_dto: MediaDTO) -> None:
         reply_markup=select_download_type(media_id=media.id),
         parse_mode='HTML'
     )
-    await swap_current_action(profile_dto, msg)
+    await current_action_service.swap_current_action(msg.message_id)
 
 
 @router.message(F.text.regexp(regular_expressions.YOUTUBE))

@@ -5,6 +5,7 @@ from aiogram.types import FSInputFile, CallbackQuery
 
 from .download_media_service import DownloadMediaService
 from .profile_service import ProfileService
+from ..management.commands.bot import delete_message
 from ..models import Media
 from ..utils.downloaders.media_downloader import MediaDownloader
 
@@ -24,7 +25,8 @@ class BotMediaService:
         telegram_file_id = media.telegram_video_file_id
 
         if telegram_file_id:
-            await self._query.message.answer_video(video=telegram_file_id, caption=caption)
+            msg = await self._query.message.answer_video(video=telegram_file_id, caption=caption)
+            await self._swap_media_in_chat(msg.message_id, media)
         else:
             await self._handle_new_media_file(media, self.VIDEO, warning=warning)
 
@@ -32,7 +34,8 @@ class BotMediaService:
         telegram_file_id = media.telegram_audio_file_id
 
         if telegram_file_id:
-            await self._query.message.answer_audio(audio=telegram_file_id, caption=caption)
+            msg = await self._query.message.answer_audio(audio=telegram_file_id, caption=caption)
+            await self._swap_media_in_chat(msg.message_id, media)
         else:
             await self._handle_new_media_file(media, self.AUDIO, warning=warning)
 
@@ -41,7 +44,6 @@ class BotMediaService:
             await self._query.answer(warning)
             return
 
-        await self._download_media_service.add_download(media)
         await self._query.answer('Downloading, please wait...')
 
         path = None
@@ -63,10 +65,21 @@ class BotMediaService:
         if media_type == self.VIDEO:
             msg = await self._query.message.answer_video(video=FSInputFile(path), caption=caption)
             media.telegram_video_file_id = msg.video.file_id
-        elif media_type == self.AUDIO:
+        else:
             msg = await self._query.message.answer_audio(audio=FSInputFile(path), caption=caption)
             media.telegram_audio_file_id = msg.audio.file_id
+
+        await self._swap_media_in_chat(msg.message_id, media)
         await media.asave()
+
+    async def _swap_media_in_chat(self, message_id: int, media: Media) -> None:
+        current_message_id = await self._download_media_service.get_message_id(media)
+        profile = await self._profile_service.get()
+
+        if current_message_id:
+            await delete_message(profile.external_id, current_message_id)
+
+        await self._download_media_service.add_download(message_id, media)
 
     @staticmethod
     async def _cleanup_file(path: str) -> None:

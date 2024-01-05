@@ -32,7 +32,7 @@ class YouTubeDownloader(MediaDownloader):
     async def download_video(self) -> Optional[str]:
         try:
             video = YouTube(self.media.url)
-            stream = video.streams.filter(file_extension="mp4").first()
+            stream = video.streams.filter(file_extension="mp4", res="360p").first()
             return await asyncio.to_thread(stream.download,
                                            output_path=self.output_path)
         except Exception as e:

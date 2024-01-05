@@ -14,7 +14,7 @@ router = Router()
 
 
 @router.message(Command(commands=['history', 'favorite']))
-async def show_media(message: types.Message) -> None:
+async def show_media_command_handler(message: types.Message) -> None:
     await message.delete()
 
     profile_dto = ProfileMapper(message.chat).map()
@@ -61,4 +61,20 @@ async def start_command_handler(message: types.Message) -> None:
     msg = await message.answer(
         text=answer,
         parse_mode='HTML')
+    await current_action_service.swap_current_action(msg.message_id)
+
+
+@router.message(Command(commands=['help']))
+async def help_command_handler(message: types.Message) -> None:
+    await message.delete()
+
+    profile_dto = ProfileMapper(message.chat).map()
+    profile_service = ProfileService(profile_dto)
+    current_action_service = CurrentActionService(profile_service)
+
+    answer = templates.help_message()
+    msg = await message.answer(
+        text=answer,
+        parse_mode='HTML'
+    )
     await current_action_service.swap_current_action(msg.message_id)

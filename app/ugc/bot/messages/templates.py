@@ -23,6 +23,23 @@ Just send me a link to the <b>media resource</b> and follow the instructions.
     '''
 
 
+def help_message() -> str:
+    return f'''
+Click on the menu and choose the desired action.
+
+You can:
+- download media (video or audio)
+- view history
+- add media to favorites
+
+Just send me a link to the <b>media resource</b> and follow the instructions.
+
+<b>Available social networks - YouTube and Instagram.</b>
+
+You can contact the administrator for help - {settings.BOT_ADMIN_NAME}.
+    '''
+
+
 def video_len_limit_message(role: Role) -> str:
     return f'''
 Sorry, you are <b>not</b> allowed to download videos longer 
@@ -34,8 +51,7 @@ You can contact the administrator for help - {settings.BOT_ADMIN_NAME}.
 
 def video_download_limit_message(second: int) -> str:
     return f'''
-You are allowed to download media with a delay 
-of {convert_seconds(second)}
+Delay between downloads - {convert_seconds(second)}
         '''
 
 

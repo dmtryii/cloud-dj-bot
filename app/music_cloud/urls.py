@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     path('profiles/', views.ProfileCreateView.as_view()),
-    path('profiles/<str:profile_id>/', views.ProfileView.as_view()),
+    path('profiles/<str:profile_id>/', views.ProfileGetByIdView.as_view()),
     path('profiles/<str:profile_id>/roles', views.ProfileGetRoleView.as_view()),
 
     path('profiles/current-actions', views.ProfileSetCurrentActionView.as_view()),
@@ -26,7 +26,7 @@ urlpatterns = [
     path('profiles/<str:profile_id>/medias/count', views.MediaCountView.as_view()),
     path('profiles/<str:profile_id>/medias/favorite/count', views.MediaFavoriteCountView.as_view()),
 
-    path('profiles/<str:profile_id>/medias/<str:media_id>', views.MediaProfileView.as_view()),
+    path('profiles/<str:profile_id>/medias/<str:media_id>', views.MediaProfileGetView.as_view()),
     path('profiles/<str:profile_id>/media', views.MediaForProfileOnCounterView.as_view()),
     path('profiles/<str:profile_id>/media/favorite', views.MediaFavoriteForProfileOnCounterView.as_view()),
 

@@ -233,7 +233,7 @@ class MediaFavoriteCountView(BaseView):
         )
 
 
-class MediaProfileView(BaseView):
+class MediaProfileGetView(BaseView):
     def get(self, request, profile_id, media_id):
         media_profile = self.media_service.get_by_profile(media_id, profile_id)
         return Response(
@@ -274,7 +274,7 @@ class ProfileCreateView(BaseView):
             )
 
 
-class ProfileView(BaseView):
+class ProfileGetByIdView(BaseView):
     def get(self, request, profile_id):
         profile = self.profile_service.get(profile_id)
         return Response(

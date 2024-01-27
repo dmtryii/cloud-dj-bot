@@ -1,9 +1,9 @@
 from aiogram import Router, F, types
 
-from .. import main_bot
 from ..exceptions import bot_exception_handler
 from ..keyboards.inline import select_download_type
 from ..messages import templates
+from ..services.bot_management_content_service import BotManagementService
 from ...bot import data_fetcher
 from ...utils import regular_expressions
 
@@ -21,8 +21,8 @@ async def _handle_media_message(message: types.Message, create_media_func) -> No
 
     if 'error_message' in media_profile:
         msg_text = await bot_exception_handler.role_restriction(chat_id)
-        msg = await main_bot.bot.send_message(chat_id=chat_id, text=msg_text, parse_mode='HTML')
-        await main_bot.swap_action(chat_id, msg.message_id)
+        msg = await message.answer(text=msg_text)
+        await BotManagementService.swap_action(chat_id, str(msg.message_id))
         return
 
     msg = await message.answer(
@@ -32,10 +32,9 @@ async def _handle_media_message(message: types.Message, create_media_func) -> No
             author=media['channel'],
             duration=media['duration']
         ),
-        reply_markup=select_download_type(media_id=media['media_id']),
-        parse_mode='HTML'
+        reply_markup=select_download_type(media_id=media['media_id'])
     )
-    await main_bot.swap_action(chat_id, str(msg.message_id))
+    await BotManagementService.swap_action(chat_id, str(msg.message_id))
 
 
 @router.message(F.text.regexp(regular_expressions.YOUTUBE))

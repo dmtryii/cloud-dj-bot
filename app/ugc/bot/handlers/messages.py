@@ -1,6 +1,6 @@
 from aiogram import Router, types
 
-from ...bot import main_bot
+from ..services.bot_management_content_service import BotManagementService
 from ...bot.messages import templates
 
 router = Router()
@@ -14,4 +14,4 @@ async def default_handler(message: types.Message) -> None:
 
     answer = templates.default_message()
     msg = await message.answer(answer)
-    await main_bot.swap_action(chat_id, str(msg.message_id))
+    await BotManagementService.swap_action(chat_id, str(msg.message_id))

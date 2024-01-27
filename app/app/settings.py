@@ -134,6 +134,10 @@ MUSIC_CLOUD_API_URL = os.environ.get('MUSIC_CLOUD_API_URL')
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 BOT_NAME = os.environ.get('BOT_NAME')
+BOT_PORT = os.environ.get('BOT_PORT')
+BOT_HOST = os.environ.get('BOT_HOST')
+BOT_WEBHOOK_URL = os.environ.get('BOT_WEBHOOK_URL')
+BOT_WEBHOOK_PATH = os.environ.get('BOT_WEBHOOK_PATH')
 BOT_ADMIN_NAME = os.environ.get('BOT_ADMIN_NAME')
 
 MEDIA_FILES = os.path.join(BASE_DIR, 'media_files')

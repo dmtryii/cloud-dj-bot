@@ -1,34 +1,25 @@
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 
 from django.conf import settings
 
 from .callbacks import download, pagination, favorite
 from .handlers import media_urls, messages, commands
-from ..bot import data_fetcher
 
-bot = Bot(token=settings.BOT_TOKEN)
+
+bot = Bot(token=settings.BOT_TOKEN,
+          parse_mode='HTML')
 dp = Dispatcher()
 
 
-async def swap_action(chat_id: str, message_id: str) -> None:
-    current_action = await data_fetcher.get_current_action(chat_id)
-
-    if current_action:
-        await delete_message(chat_id, current_action['message_id'])
-
-    await data_fetcher.set_current_action(chat_id, message_id)
+async def on_startup() -> None:
+    await bot.set_webhook(f"{settings.BOT_WEBHOOK_URL}{settings.BOT_WEBHOOK_PATH}")
 
 
-async def delete_message(chat_id: str, message_id: str) -> None:
-    try:
-        await bot.delete_message(chat_id=chat_id, message_id=int(message_id))
-    except Exception as e:
-        logging.error(f"Error deleting message: {e}")
-
-
-async def main():
+def main():
     logging.basicConfig(level=logging.DEBUG)
     dp.include_routers(
         commands.router,
@@ -38,4 +29,16 @@ async def main():
         favorite.router,
         pagination.router
     )
-    await dp.start_polling(bot)
+
+    dp.startup.register(on_startup)
+
+    app = web.Application()
+
+    webhook_requests_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot
+    )
+
+    webhook_requests_handler.register(app, path=settings.BOT_WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+    web.run_app(app, host=settings.BOT_HOST, port=int(settings.BOT_PORT))

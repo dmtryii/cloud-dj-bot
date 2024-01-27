@@ -1,5 +1,6 @@
 from aiogram.types import CallbackQuery, FSInputFile
 
+from .bot_management_content_service import BotManagementService
 from .. import main_bot
 from ..exceptions import bot_exception_handler
 from ..messages import templates
@@ -42,14 +43,14 @@ class BotMediaService:
 
         chat_id = str(self._query.message.chat.id)
         downloading_alert = await self._query.message.answer('Downloading, please wait...')
-        await main_bot.swap_action(chat_id, str(downloading_alert.message_id))
+        await BotManagementService.swap_action(chat_id, str(downloading_alert.message_id))
 
         download = await self._download_social_network(chat_id, media_id, self._media_type)
 
         if 'error_message' in download:
             msg_text = await bot_exception_handler.role_restriction(chat_id)
             msg = await main_bot.bot.send_message(chat_id=chat_id, text=msg_text, parse_mode='HTML')
-            await main_bot.swap_action(chat_id, msg.message_id)
+            await BotManagementService.swap_action(chat_id, msg.message_id)
             return
 
         output = download['output']
@@ -71,6 +72,6 @@ class BotMediaService:
         media_download = await data_fetcher.get_download_media(chat_id, media_id)
 
         if 'message_id' in media_download:
-            await main_bot.delete_message(chat_id, media_download['message_id'])
+            await BotManagementService.delete_message(chat_id, media_download['message_id'])
 
         await data_fetcher.add_download_media(message_id, chat_id, media_id)

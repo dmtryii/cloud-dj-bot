@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'music_cloud',
     'ugc',
 ]
 
@@ -50,6 +52,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'music_cloud.exceptions.exception_handler.custom_exception_handler'
+}
 
 ROOT_URLCONF = 'app.urls'
 
@@ -123,6 +129,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MUSIC_CLOUD_API_URL = os.environ.get('MUSIC_CLOUD_API_URL')
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 BOT_NAME = os.environ.get('BOT_NAME')

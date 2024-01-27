@@ -1,15 +1,14 @@
-from ...models import Profile, Role, Media
 
 from django.conf import settings
 
 
 def default_message() -> str:
-    return 'I do not understand you'
+    return 'I do not understand you.'
 
 
-def start_message(profile: Profile) -> str:
+def start_message(first_name: str) -> str:
     return f'''
-Hello <b>{profile.first_name}</b>!
+Hello <b>{first_name}</b>!
 I am a <b>BOT</b> for downloading and arranging media resources from social networks.
 
 You can:
@@ -40,34 +39,25 @@ You can contact the administrator for help - {settings.BOT_ADMIN_NAME}.
     '''
 
 
-def video_len_limit_message(role: Role) -> str:
+def get_media_info_cart(media_title: str, url: str, author: str, duration: int, title: str = '') -> str:
+    return (f'<b>{title}</b>\n' +
+            f'<a href="{url}">{media_title}</a>\n' +
+            f'Author: {author}\n' +
+            f'Duration: {convert_seconds(duration)}')
+
+
+def media_caption(title: str, channel: str) -> str:
+    return f'{title}\nAuthor: {channel}\n{settings.BOT_NAME}'
+
+
+def role_restriction(allowed_media_length: int, delay_between_downloads: int) -> str:
     return f'''
-Sorry, you are <b>not</b> allowed to download videos longer 
-than <b>{convert_seconds(role.allowed_media_length)}</b> minutes.
+There are restrictions on your account:
+- You are <b>not</b> allowed to download videos longer than <b>{convert_seconds(allowed_media_length)}</b> minutes.
+- The delay between downloads should exceed <b>{convert_seconds(delay_between_downloads)}</b> minutes.
 
 You can contact the administrator for help - {settings.BOT_ADMIN_NAME}.
-        '''
-
-
-def video_download_limit_message(second: int) -> str:
-    return f'''
-Delay between downloads - {convert_seconds(second)}
-        '''
-
-
-def video_caption(media: Media) -> str:
-    return f'{media.title}\nAuthor: {media.channel}\n{settings.BOT_NAME}'
-
-
-def audio_caption(media: Media) -> str:
-    return f'Author: {media.channel}\n{settings.BOT_NAME}'
-
-
-def get_media_info_cart(media: Media, title: str = '') -> str:
-    return (f'<b>{title}</b>\n' +
-            f'<a href="{media.url}">{media.title}</a>\n' +
-            f'Author: {media.channel}\n' +
-            f'Duration: {convert_seconds(media.duration)}')
+    '''
 
 
 def convert_seconds(seconds) -> str:

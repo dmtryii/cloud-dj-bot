@@ -1,5 +1,5 @@
-import asyncio
 import os
+import re
 from abc import ABC
 from typing import Optional
 
@@ -8,70 +8,59 @@ from instaloader import Post
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pytube import YouTube
 
+from .. import regular_expressions
 from ..media_utils import InstagramLoader
-from ...models import Media
-from ...service.media_service import MediaService
 
 
 class MediaDownloader(ABC):
-    def __init__(self, media: Media):
-        self.media = media
-        self.output_path = settings.MEDIA_FILES
 
-    async def download_video(self) -> str:
+    OUTPUT_PATH = settings.MEDIA_FILES
+
+    def download_video(self, url: str) -> str:
         pass
 
-    async def download_audio(self) -> str:
+    def download_audio(self, url: str) -> str:
         pass
 
 
 class YouTubeDownloader(MediaDownloader):
-    def __init__(self, media: Media):
-        super().__init__(media)
-
-    async def download_video(self) -> Optional[str]:
+    def download_video(self, url: str) -> Optional[str]:
         try:
-            video = YouTube(self.media.url)
+            video = YouTube(url)
             stream = video.streams.filter(file_extension="mp4", res="360p").first()
-            return await asyncio.to_thread(stream.download,
-                                           output_path=self.output_path)
+            return stream.download(output_path=self.OUTPUT_PATH)
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
 
-    async def download_audio(self) -> Optional[str]:
+    def download_audio(self, url: str) -> Optional[str]:
         try:
-            video = YouTube(self.media.url)
+            video = YouTube(url)
             stream = video.streams.filter(only_audio=True).first()
-            return await asyncio.to_thread(stream.download,
-                                           output_path=self.output_path)
+            return stream.download(output_path=self.OUTPUT_PATH)
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
 
 
 class InstagramDownloader(MediaDownloader):
-    def __init__(self, media: Media, media_service: MediaService):
-        super().__init__(media)
-        self.media_service = media_service
-
-    async def download_video(self) -> Optional[str]:
+    def download_video(self, url: str) -> Optional[str]:
         inst_loader_singleton = InstagramLoader()
         inst_loader = inst_loader_singleton.inst_loader
 
-        inst_loader.dirname_pattern = self.output_path
+        inst_loader.dirname_pattern = self.OUTPUT_PATH
 
-        shortcode = await self.media_service.get_id_without_prefix()
+        shortcode = self._extract_shortcode(url)
         post = Post.from_shortcode(context=inst_loader.context, shortcode=shortcode)
-        filename = os.path.join(self.output_path, f"{post.owner_username}_{shortcode}")
+        filename = os.path.join(self.OUTPUT_PATH, f"{post.owner_username}_{shortcode}")
         inst_loader.filename_pattern = filename
 
         inst_loader.download_pictures = False
         inst_loader.download_videos = True
         inst_loader.download_post(post, filename)
 
-        for file in os.listdir(self.output_path):
-            file_path = os.path.join(self.output_path, file)
+        for file in os.listdir(self.OUTPUT_PATH):
+            file_path = os.path.join(self.OUTPUT_PATH, file)
             try:
                 if not file.endswith(".mp4"):
                     os.remove(file_path)
@@ -81,18 +70,18 @@ class InstagramDownloader(MediaDownloader):
 
         return filename + '.mp4'
 
-    async def download_audio(self) -> Optional[str]:
-        video_path = await self.download_video()
+    def download_audio(self, url: str) -> Optional[str]:
+        video_path = self.download_video(url)
 
         if video_path:
-            audio_path = self.convert_video_to_audio(video_path)
+            audio_path = self._convert_video_to_audio(video_path)
             os.remove(video_path)
             return audio_path
 
         return None
 
     @staticmethod
-    def convert_video_to_audio(video_path: str) -> str:
+    def _convert_video_to_audio(video_path: str) -> str:
         audio_path = video_path.replace(".mp4", ".mp3")
 
         video_clip = VideoFileClip(video_path)
@@ -102,3 +91,12 @@ class InstagramDownloader(MediaDownloader):
         video_clip.close()
 
         return audio_path
+
+    @staticmethod
+    def _extract_shortcode(url: str) -> Optional[str]:
+        pattern = re.compile(regular_expressions.INSTAGRAM_EXTRACT_SHORTCODE)
+        match = pattern.match(url)
+
+        if match:
+            shortcode = match.group(1)
+            return shortcode

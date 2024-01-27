@@ -12,13 +12,15 @@ class Action(str, Enum):
 
 
 class Navigation(str, Enum):
-    PREV_STEP = 'video'
-    NEXT_STEP = 'audio'
+    START = 'start'
+    PREV_STEP = 'prev'
+    NEXT_STEP = 'next'
+    END = 'end'
 
 
 class SelectDownloadType(CallbackData, prefix="dow"):
     action: Action
-    media_id: int
+    media_id: str
 
 
 class Pagination(CallbackData, prefix="pag"):
@@ -29,10 +31,10 @@ class Pagination(CallbackData, prefix="pag"):
 
 class Favorite(CallbackData, prefix="fav"):
     action: Action
-    media_id: int
+    media_id: str
 
 
-def select_download_type(media_id: int) -> InlineKeyboardMarkup:
+def select_download_type(media_id: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text='Video',
@@ -45,21 +47,30 @@ def select_download_type(media_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def media_pagination(media_id: int, types: str,
+def media_pagination(media_id: str, types: str,
                      page: int = 0, total_pages: int = 0) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
+        InlineKeyboardButton(text='<<',
+                             callback_data=Pagination(navigation=Navigation.START,
+                                                      types=types,
+                                                      page=page).pack()),
         InlineKeyboardButton(text='<',
                              callback_data=Pagination(navigation=Navigation.PREV_STEP,
                                                       types=types,
                                                       page=page - 1).pack()),
+
         InlineKeyboardButton(text=f'{page + 1}/{total_pages}',
                              callback_data=f'{page + 1}/{total_pages}'),
 
         InlineKeyboardButton(text='>',
                              callback_data=Pagination(navigation=Navigation.NEXT_STEP,
                                                       types=types,
-                                                      page=page + 1).pack())
+                                                      page=page + 1).pack()),
+        InlineKeyboardButton(text='>>',
+                             callback_data=Pagination(navigation=Navigation.END,
+                                                      types=types,
+                                                      page=page).pack())
     )
     builder.row(
         InlineKeyboardButton(text='Video',

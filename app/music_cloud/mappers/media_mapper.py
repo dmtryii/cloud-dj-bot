@@ -5,24 +5,12 @@ from typing import Optional
 from instaloader import Post
 from pytube import YouTube
 
-from ..utils import regular_expressions
+from ..models import Media
 from ..utils.media_utils import InstagramLoader
 
 
-class MediaDTO:
-    def __init__(self, external_id: str, title: str, url: str, duration: int, channel: str):
-        self.external_id = external_id
-        self.title = title
-        self.url = url
-        self.duration = duration
-        self.channel = channel
-
-
 class MediaMapper(ABC):
-    def __init__(self, url: str):
-        self.url = url
-
-    async def map(self) -> MediaDTO:
+    def map(self, url: str) -> Media:
         pass
 
     @staticmethod
@@ -32,42 +20,36 @@ class MediaMapper(ABC):
 
 
 class YouTubeMapper(MediaMapper):
-    def __init__(self, url: str):
-        super().__init__(url)
-
-    def map(self) -> MediaDTO:
-        youtube = YouTube(self.url)
-        return MediaDTO(
-            external_id=f'yt_{youtube.video_id}',
+    def map(self, url: str) -> Media:
+        youtube = YouTube(url)
+        return Media(
+            media_id=f'yt_{youtube.video_id}',
             title=self._remove_hashtags(youtube.title),
-            url=self.url,
+            url=url,
             duration=youtube.length,
             channel=youtube.author
         )
 
 
 class InstagramMapper(MediaMapper):
-    def __init__(self, url: str):
-        super().__init__(url)
-
-    def map(self) -> MediaDTO:
+    def map(self, url: str) -> Media:
         inst_loader_singleton = InstagramLoader()
         inst_loader = inst_loader_singleton.inst_loader
 
-        post = Post.from_shortcode(context=inst_loader.context, shortcode=self._extract_shortcode(self.url))
+        post = Post.from_shortcode(context=inst_loader.context, shortcode=self._extract_shortcode(url))
 
         if post.is_video:
-            return MediaDTO(
-                external_id=f'inst_{post.shortcode}',
+            return Media(
+                media_id=f'inst_{post.shortcode}',
                 title=self._remove_hashtags(post.caption if post.caption else 'no_name').strip(),
-                url=self.url,
+                url=url,
                 duration=round(post.video_duration),
                 channel=post.owner_username
             )
 
     @staticmethod
     def _extract_shortcode(url: str) -> Optional[str]:
-        pattern = re.compile(regular_expressions.INSTAGRAM_EXTRACT_SHORTCODE)
+        pattern = re.compile(r'https?://(?:www\.)?instagram\.com/(?:reel|reels|p)/([^/]+)/?')
         match = pattern.match(url)
 
         if match:

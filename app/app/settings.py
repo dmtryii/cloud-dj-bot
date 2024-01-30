@@ -83,11 +83,11 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_POST')
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
 
@@ -140,7 +140,7 @@ BOT_WEBHOOK_URL = os.environ.get('BOT_WEBHOOK_URL')
 BOT_WEBHOOK_PATH = os.environ.get('BOT_WEBHOOK_PATH')
 BOT_ADMIN_NAME = os.environ.get('BOT_ADMIN_NAME')
 
-MEDIA_FILES = os.path.join(BASE_DIR, 'media_files')
+MEDIA_FILES = os.path.join(BASE_DIR, 'music_cloud/media_files')
 
 INST_USERNAME = os.environ.get('INST_USERNAME')
 INST_PASSWORD = os.environ.get('INST_PASSWORD')

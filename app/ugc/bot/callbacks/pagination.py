@@ -70,7 +70,6 @@ async def pagination_media_callback(query: CallbackQuery, callback_data: Paginat
             reply_markup=media_pagination(current_media['media_id'],
                                           media_type,
                                           page=page,
-                                          total_pages=total_pages),
-            parse_mode='HTML'
+                                          total_pages=total_pages)
         )
     await query.answer()

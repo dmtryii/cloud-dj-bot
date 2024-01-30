@@ -4,9 +4,10 @@ from aiogram import types
 from aiogram import Router
 from aiogram.filters import CommandStart, Command
 
-from .. import data_fetcher, main_bot
+from .. import data_fetcher
 from ..keyboards.inline import media_pagination
 from ..messages import templates
+from ..services.bot_management_content_service import BotManagementService
 
 router = Router()
 
@@ -20,7 +21,7 @@ async def _show_media(message: types.Message, command_type: str) -> None:
 
     if media_count == 0:
         msg = await message.answer(text=f"You don't have {command_type} media yet.")
-        await main_bot.swap_action(chat_id, str(msg.message_id))
+        await BotManagementService.swap_action(chat_id, str(msg.message_id))
         return
 
     media = await media_fetcher(chat_id, 0)
@@ -36,10 +37,9 @@ async def _show_media(message: types.Message, command_type: str) -> None:
         text=answer_text,
         reply_markup=media_pagination(media_id=media['media_id'],
                                       types=command_type,
-                                      total_pages=media_count),
-        parse_mode='HTML'
+                                      total_pages=media_count)
     )
-    await main_bot.swap_action(chat_id, str(msg.message_id))
+    await BotManagementService.swap_action(chat_id, str(msg.message_id))
 
 
 async def _get_media_details(chat_id: str, command_type: str) -> tuple[int, Callable]:
@@ -75,10 +75,9 @@ async def start_command_handler(message: types.Message) -> None:
         }
     )
     msg = await message.answer(
-        text=templates.start_message(profile['first_name']),
-        parse_mode='HTML'
+        text=templates.start_message(profile['first_name'])
     )
-    await main_bot.swap_action(str(chat.id), str(msg.message_id))
+    await BotManagementService.swap_action(str(chat.id), str(msg.message_id))
 
 
 @router.message(Command(commands=['help']))
@@ -87,7 +86,6 @@ async def help_command_handler(message: types.Message) -> None:
     chat_id = str(message.chat.id)
 
     msg = await message.answer(
-        text=templates.help_message(),
-        parse_mode='HTML'
+        text=templates.help_message()
     )
-    await main_bot.swap_action(chat_id, str(msg.message_id))
+    await BotManagementService.swap_action(chat_id, str(msg.message_id))

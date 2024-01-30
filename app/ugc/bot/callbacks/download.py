@@ -9,7 +9,7 @@ router = Router()
 
 
 async def _handle_media_download_callback(query: CallbackQuery, callback_data: SelectDownloadType,
-                                         media_type: str) -> None:
+                                          media_type: str) -> None:
 
     media_prefix = callback_data.media_id.split('_', 1)[0]
 
